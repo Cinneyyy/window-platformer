@@ -1,0 +1,15 @@
+{
+    "files.associations": {
+        "input.h": "c",
+        "ostream": "c",
+        "renderer.h": "c",
+        "texture.h": "c",
+        "window.h": "c",
+        "vector.h": "c",
+        "obj.h": "c",
+        "application.h": "c",
+        "number.h": "c",
+        "color_palette.h": "c",
+        "object.h": "c"
+    }
+}

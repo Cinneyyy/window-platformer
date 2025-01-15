@@ -1,0 +1,25 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Run C/C++",
+            "command": [
+                "gcc -I ./include -L ./lib -o ./build/main (Get-ChildItem ./src/*.c) -lmingw32 -lSDL2main -lSDL2 -lSDL2_image",
+                "\n./build/main"
+            ],
+            "type": "shell",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": false,
+                "clear": true
+            }
+        }
+    ]
+}
