@@ -21,6 +21,7 @@ typedef struct Object {
     V2f loc, size;
     SDL_Rect output;
     ObjectType type;
+    bool enabled;
 } Object;
 
 

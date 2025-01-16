@@ -13,7 +13,7 @@ Window *win_new(char *title, V2f loc, V2f size, bool moveable, bool resizable, C
     win->worldSize = size;
     win->screenLoc = world_point_to_screen((V2f){loc.x - size.x/2.0f, loc.y + size.y/2.0f});
     win->screenSize = world_scale_to_screen(size);
-    win->sdlWin = SDL_CreateWindow(title, win->screenLoc.x, win->screenLoc.y, win->screenSize.y, win->screenSize.y, moveable ? SDL_WINDOW_SHOWN : SDL_WINDOW_BORDERLESS);
+    win->sdlWin = SDL_CreateWindow(title, win->screenLoc.x, win->screenLoc.y, win->screenSize.x, win->screenSize.y, moveable ? SDL_WINDOW_SHOWN : SDL_WINDOW_BORDERLESS);
     win->moveable = moveable;
     win->resizable = resizable;
     win->rend = rend_new(win);

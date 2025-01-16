@@ -17,3 +17,4 @@ typedef struct GameState {
 
 
 extern GameState gameState;
+extern bool isLevelLoading;

@@ -19,8 +19,11 @@ static u32 lastFrame;
 static void handle_frame();
 
 static int filter_window_events(void *userdata, SDL_Event *evt) {
+    if(isLevelLoading) {
+        return 1;
+    }
+
     if(evt->type != SDL_WINDOWEVENT) {
-        printf("%i\n", evt->type);
         return 1;
     }
 
@@ -57,6 +60,7 @@ static int filter_window_events(void *userdata, SDL_Event *evt) {
             handle_frame();
             break;
         }
+        default: return 1;
     }
 
     return 0;
@@ -125,7 +129,10 @@ void app_run(void) {
         handle_frame();
     }
 
-    lvl_unload_current();
+    if(gameState.loadedLevel) {
+        level_unload_current();
+    }
+
     SDL_Quit();
 }
 

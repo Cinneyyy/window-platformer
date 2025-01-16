@@ -9,6 +9,7 @@ Object *obj_new(LevelObject lObj) {
     obj->loc = lObj.loc;
     obj->size = lObj.size;
     obj->type = lObj.type;
+    obj->enabled = true;
 
     return obj;
 }
@@ -18,7 +19,7 @@ void obj_destroy(Object *obj) {
 }
 
 void obj_on_move(Object *obj) {
-    V2i sLoc = world_point_to_screen((V2f){obj->loc.x - obj->size.x/2.0f, obj->loc.y - obj->size.y/2.0f});
+    V2i sLoc = world_point_to_screen((V2f){obj->loc.x - obj->size.x/2.0f, obj->loc.y + obj->size.y/2.0f});
     obj->output.x = sLoc.x;
     obj->output.y = sLoc.y;
 }
@@ -30,6 +31,10 @@ void obj_on_resize(Object *obj) {
 }
 
 void obj_draw(Object *obj, Window *win) {
+    if(!obj->enabled) {
+        return;
+    }
+
     SDL_Renderer *sdlRend = win->rend->sdlRend;
 
     u8 r, g, b;
