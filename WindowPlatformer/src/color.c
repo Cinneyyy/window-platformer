@@ -1,6 +1,7 @@
 #include "color.h"
 #include "math.h"
 #include "utils.h"
+#include "stdio.h"
 
 u32 col_mix_linear(u32 c1, u32 c2) {
     u8 r1, g1, b1, r2, g2, b2;
@@ -75,6 +76,7 @@ u32 col_multiply(u32 col, f32 v) {
         (u8)((f32)g * v),
         (u8)((f32)b * v)
     );
+
 }
 
 inline u32 col_gray(u8 value) {

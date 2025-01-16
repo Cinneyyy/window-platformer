@@ -1,5 +1,7 @@
 #include "renderer.h"
 #include "SDL2/SDL.h"
+#include "game_state.h"
+#include "color.h"
 
 Renderer *rend_new(Window *win) {
     Renderer *rend = (Renderer*)malloc(sizeof(Renderer));
@@ -12,8 +14,4 @@ Renderer *rend_new(Window *win) {
 void rend_destroy(Renderer *rend) {
     SDL_DestroyRenderer(rend->sdlRend);
     free(rend);
-}
-
-void rend_render(Window *win) {
-    
 }

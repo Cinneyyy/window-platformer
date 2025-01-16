@@ -10,6 +10,13 @@
         "application.h": "c",
         "number.h": "c",
         "color_palette.h": "c",
-        "object.h": "c"
+        "object.h": "c",
+        "vec2.h": "c",
+        "sdl.h": "c",
+        "game_state.h": "c",
+        "main_menu.h": "c",
+        "level.h": "c",
+        "stdbool.h": "c",
+        "stdio.h": "c"
     }
 }

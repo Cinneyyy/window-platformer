@@ -2,9 +2,9 @@
 #include "SDL2/SDL.h"
 #include "application.h"
 #include "list.h"
-#include "game_state.h"
 #include "main_menu.h"
 #include "stdio.h"
+#include "game_state.h"
 
 static const uint32_t KEY_COUNT = KC_NONE;
 static const uint32_t MAX_CONCURRENT_KEYS = 8;
@@ -64,23 +64,6 @@ void input_handle_events() {
                 app_quit();
                 return;
             };
-            case SDL_WINDOWEVENT: {
-                switch(evt.window.event) {
-                    case SDL_WINDOWEVENT_CLOSE: {
-                        if(gameState.loadedLevel) {
-                            lvl_unload_current();
-                            mm_load();
-                        }
-                        else {
-                            app_quit();
-                        }
-
-                        return;
-                    }
-                }
-
-                break;
-            };
             case SDL_KEYDOWN: {
                 if(evt.key.keysym.sym == SDLK_ESCAPE) {
                     app_quit();
@@ -90,7 +73,7 @@ void input_handle_events() {
                 KeyCode key = sdl_key_to_keycode((SDL_KeyCode)evt.key.keysym.sym);
 
                 if(key != KC_NONE && !keyState[(size_t)key]) {
-                    list_append(additionPending, &key);
+                    list_append(additionPending, (void*)key);
                 }
 
                 break;
@@ -99,7 +82,7 @@ void input_handle_events() {
                 KeyCode key = sdl_key_to_keycode((SDL_KeyCode)evt.key.keysym.sym);
 
                 if(key != KC_NONE && keyState[(size_t)key]) {
-                    list_append(removalPending, &key);
+                    list_append(removalPending, (void*)key);
                 }
 
                 break;
@@ -109,16 +92,14 @@ void input_handle_events() {
                 KeyCode key = KC_NONE;
 
                 switch(mb) {
-                    case 0: key = KC_LMB; break;
-                    case 1: key = KC_RMB; break;
+                    case 1: key = KC_LMB; break;
                     case 2: key = KC_MMB; break;
+                    case 3: key = KC_RMB; break;
                 }
 
                 if(key != KC_NONE && !keyState[(size_t)key]) {
-                    list_append(additionPending, &key);
+                    list_append(additionPending, (void*)key);
                 }
-
-                printf("Pressed mb: %i\n", mb);
                 
                 break;
             };
@@ -127,16 +108,14 @@ void input_handle_events() {
                 KeyCode key = KC_NONE;
 
                 switch(mb) {
-                    case 0: key = KC_LMB; break;
-                    case 1: key = KC_RMB; break;
+                    case 1: key = KC_LMB; break;
                     case 2: key = KC_MMB; break;
+                    case 3: key = KC_RMB; break;
                 }
                 
                 if(key != KC_NONE && keyState[(size_t)key]) {
-                    list_append(removalPending, &key);
+                    list_append(removalPending, (void*)key);
                 }
-
-                printf("Released mb: %i\n", mb);
                 
                 break;
             }
@@ -146,10 +125,10 @@ void input_handle_events() {
     memcpy(lastKeyState, keyState, sizeof(bool) * KEY_COUNT);
 
     for(size_t i = 0; i < removalPending->count; i++) {
-        keyState[*(size_t*)list_at(removalPending, i)] = false;
+        keyState[(size_t)list_at(removalPending, i)] = false;
     }
     for(size_t i = 0; i < additionPending->count; i++) {
-        keyState[*(size_t*)list_at(additionPending, i)] = true;
+        keyState[(size_t)list_at(additionPending, i)] = true;
     }
 
     list_clear(removalPending);

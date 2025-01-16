@@ -1,9 +1,5 @@
 #pragma once
 
-#include "vec2.h"
-#include "SDL2/SDL.h"
-#include "window.h"
-
 typedef enum ObjectType {
     OBJ_WALL,
     OBJ_PLAYER,
@@ -13,12 +9,23 @@ typedef enum ObjectType {
     OBJ_PORTAL
 } ObjectType;
 
+typedef struct Object Object;
+
+#include "vec2.h"
+#include "SDL2/SDL.h"
+#include "window.h"
+#include "level.h"
+
+
 typedef struct Object {
     V2f loc, size;
     SDL_Rect output;
     ObjectType type;
 } Object;
 
+
+Object *obj_new(LevelObject lObj);
+void obj_destroy(Object *obj);
 
 void obj_on_move(Object *obj);
 void obj_on_resize(Object *obj);

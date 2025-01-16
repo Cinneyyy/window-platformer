@@ -1,9 +1,11 @@
 #pragma once
 
+typedef enum KeyCode KeyCode;
+
 #include "SDL2/SDL.h"
 #include "stdbool.h"
 
-typedef enum {
+typedef enum KeyCode {
     KC_A,
     KC_B,
     KC_C,

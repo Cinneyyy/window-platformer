@@ -1,40 +1,41 @@
 #pragma once
 
+typedef struct LevelWindow LevelWindow;
+typedef struct LevelObject LevelObject;
+typedef struct LevelAura LevelAura;
+typedef struct Level Level;
+
 #include "vec2.h"
 #include "number.h"
 #include "stdbool.h"
 #include "color_palette.h"
 #include "object.h"
 
-typedef struct ColorPalette ColorPalette;
-
-typedef enum ObjectType ObjectType;
-
 typedef struct LevelWindow {
-    const V2f loc, size;
-    const bool moveable;
-    const ColorPalette colors;
-    const char *title;
+    V2f loc, size;
+    bool moveable, resizable;
+    ColorPalette *colors;
+    char *title;
 } LevelWindow;
 
 typedef struct LevelObject {
-    const V2f loc, size;
-    const ObjectType type;
+    V2f loc, size;
+    ObjectType type;
 } LevelObject;
 
 typedef struct LevelAura {
-    const bool enabled;
-    const f32 size;
-    const ColorPalette colors;
+    bool enabled;
+    f32 size;
+    ColorPalette colors;
 } LevelAura;
 
 typedef struct Level {
-    const size_t windowCount;
-    const LevelWindow *windows;
-    const size_t objectCount;
-    const LevelObject *objects;
-    const LevelObject player;
-    const LevelAura aura;
+    size_t windowCount;
+    LevelWindow *windows;
+    size_t objectCount;
+    LevelObject *objects;
+    LevelObject player;
+    LevelAura aura;
 } Level;
 
 

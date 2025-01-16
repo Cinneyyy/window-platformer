@@ -15,3 +15,17 @@ V2i world_scale_to_screen(V2f scale) {
         (i32)floorf(scale.y / 2.0f * SCREEN_H)
     };
 }
+
+V2f world_point_from_screen(V2i point) {
+    return (V2f){
+        (point.x - WH_DELTA) / SCREEN_H * 2.0f - 1.0f,
+        -(point.y / SCREEN_H * 2.0f - 1.0f)
+    };
+}
+
+V2f world_scale_from_screen(V2i scale) {
+    return (V2f){
+        scale.x / SCREEN_H * 2.0f,
+        scale.y / SCREEN_H * 2.0f
+    };
+}
