@@ -8,6 +8,8 @@
 #include "math.h"
 #include "input.h"
 #include "utils.h"
+#include "unistd.h"
+#include "pthread.h"
 
 static void handle_collision(V2f *newPos, V2f *vel, bool *grounded, Object **col) {
     Object pl = *gameState.player;
@@ -197,5 +199,6 @@ int main(int argc, char *argv[]) {
     level_load(level);
 
     app_run();
+
     return 0;
 }

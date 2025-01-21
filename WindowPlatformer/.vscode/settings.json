@@ -17,6 +17,7 @@
         "main_menu.h": "c",
         "level.h": "c",
         "stdbool.h": "c",
-        "stdio.h": "c"
+        "stdio.h": "c",
+        "utils.h": "c"
     }
 }

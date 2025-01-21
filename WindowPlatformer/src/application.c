@@ -19,6 +19,8 @@ static u32 lastFrame;
 static void handle_frame();
 
 static int filter_window_events(void *userdata, SDL_Event *evt) {
+    printf("%i ", evt->type);
+
     if(isLevelLoading) {
         return 1;
     }
@@ -52,8 +54,6 @@ static int filter_window_events(void *userdata, SDL_Event *evt) {
             else if(evt->window.event == SDL_WINDOWEVENT_MOVED) {
                 win_on_move(win);
             }
-
-            handle_frame();
             break;
         }
         case SDL_WINDOWEVENT_EXPOSED: {
