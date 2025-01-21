@@ -12,14 +12,14 @@ typedef enum ObjectType {
 typedef struct Object Object;
 
 #include "vec2.h"
-#include "SDL2/SDL.h"
+#include "SDL3/SDL.h"
 #include "window.h"
 #include "level.h"
 
 
 typedef struct Object {
     V2f loc, size;
-    SDL_Rect output;
+    SDL_FRect output;
     ObjectType type;
     bool enabled;
 } Object;

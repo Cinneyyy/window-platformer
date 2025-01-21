@@ -3,7 +3,7 @@
 typedef struct Window Window;
 
 #include "number.h"
-#include "SDL2/SDL.h"
+#include "SDL3/SDL.h"
 #include "renderer.h"
 #include "vec2.h"
 #include "color_palette.h"

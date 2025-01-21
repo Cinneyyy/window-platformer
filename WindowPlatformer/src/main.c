@@ -1,4 +1,5 @@
-#include "SDL2/SDL.h"
+#include "SDL3/SDL.h"
+#include "SDL3/SDL_main.h"
 #include "application.h"
 #include "level.h"
 #include "stdlib.h"
@@ -9,7 +10,6 @@
 #include "input.h"
 #include "utils.h"
 #include "unistd.h"
-#include "pthread.h"
 
 static void handle_collision(V2f *newPos, V2f *vel, bool *grounded, Object **col) {
     Object pl = *gameState.player;
@@ -197,7 +197,6 @@ int main(int argc, char *argv[]) {
     );
 
     level_load(level);
-
     app_run();
 
     return 0;

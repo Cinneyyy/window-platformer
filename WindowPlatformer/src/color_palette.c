@@ -1,6 +1,7 @@
 #include "color.h"
 #include "color_palette.h"
 #include "object.h"
+#include "stdlib.h"
 
 static void populate(ColorPalette *cpal, u32 c) {
     cpal->background = col_multiply(c, 0.225f); // Multiply by 0.225

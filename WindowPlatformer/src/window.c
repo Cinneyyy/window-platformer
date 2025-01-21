@@ -5,6 +5,8 @@
 #include "color.h"
 #include "game_state.h"
 #include "stdio.h"
+#include "SDL3/SDL.h"
+#include "stdlib.h"
 
 Window *win_new(char *title, V2f loc, V2f size, bool moveable, bool resizable, ColorPalette *colors) {
     Window *win = (Window*)malloc(sizeof(Window));
@@ -13,14 +15,15 @@ Window *win_new(char *title, V2f loc, V2f size, bool moveable, bool resizable, C
     win->worldSize = size;
     win->screenLoc = world_point_to_screen((V2f){loc.x - size.x/2.0f, loc.y + size.y/2.0f});
     win->screenSize = world_scale_to_screen(size);
-    win->sdlWin = SDL_CreateWindow(title, win->screenLoc.x, win->screenLoc.y, win->screenSize.x, win->screenSize.y, moveable ? SDL_WINDOW_SHOWN : SDL_WINDOW_BORDERLESS);
+    win->sdlWin = SDL_CreateWindow(title, win->screenSize.x, win->screenSize.y, moveable ? 0 : SDL_WINDOW_BORDERLESS);
+    SDL_SetWindowPosition(win->sdlWin, win->screenLoc.x, win->screenLoc.y);
     win->moveable = moveable;
     win->resizable = resizable;
     win->rend = rend_new(win);
     win->colors = colors;
     win->id = SDL_GetWindowID(win->sdlWin);
 
-    SDL_SetWindowResizable(win->sdlWin, resizable ? SDL_TRUE : SDL_FALSE);
+    SDL_SetWindowResizable(win->sdlWin, resizable);
 
     u8 bgr, bgg, bgb;
     col_get_rgb(colors->background, &bgr, &bgg, &bgb);

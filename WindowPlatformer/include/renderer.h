@@ -3,7 +3,7 @@
 typedef struct Renderer Renderer;
 
 #include "window.h"
-#include "SDL2/SDL.h"
+#include "SDL3/SDL.h"
 
 typedef struct Renderer {
     SDL_Renderer *sdlRend;

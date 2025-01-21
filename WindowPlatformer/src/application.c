@@ -1,6 +1,6 @@
 #include "application.h"
 #include "stdio.h"
-#include "SDL2/SDL.h"
+#include "SDL3/SDL.h"
 #include "input.h"
 #include "game_state.h"
 #include "level.h"
@@ -18,24 +18,26 @@ static u32 lastFrame;
 
 static void handle_frame();
 
-static int filter_window_events(void *userdata, SDL_Event *evt) {
-    printf("%i ", evt->type);
+static bool filter_window_events(void *userdata, SDL_Event *evt) {
+    if(evt->type == SDL_EVENT_WINDOW_EXPOSED) {
+        printf("E");
+    }
 
     if(isLevelLoading) {
-        return 1;
+        return true;
     }
 
-    if(evt->type != SDL_WINDOWEVENT) {
-        return 1;
+    if(evt->type >= SDL_EVENT_WINDOW_FIRST && evt->type <= SDL_EVENT_WINDOW_LAST) {
+        return true;
     }
 
-    switch(evt->window.event) {
-        case SDL_WINDOWEVENT_CLOSE: {
+    switch(evt->window.type) {
+        case SDL_EVENT_WINDOW_CLOSE_REQUESTED: {
             app_quit(); // TODO: load main menu instead of quitting, if it's not already loaded
             break;
         }
-        case SDL_WINDOWEVENT_RESIZED:
-        case SDL_WINDOWEVENT_MOVED: {
+        case SDL_EVENT_WINDOW_RESIZED:
+        case SDL_EVENT_WINDOW_MOVED: {
             Window *win = NULL;
             for(size_t i = 0; i < gameState.winCount; i++) {
                 if(gameState.windows[i]->id == evt->window.windowID) {
@@ -48,22 +50,22 @@ static int filter_window_events(void *userdata, SDL_Event *evt) {
                 break;
             }
 
-            if(evt->window.event == SDL_WINDOWEVENT_RESIZED) {
+            if(evt->window.type == SDL_EVENT_WINDOW_RESIZED) {
                 win_on_resize(win);
             }
-            else if(evt->window.event == SDL_WINDOWEVENT_MOVED) {
+            else if(evt->window.type == SDL_EVENT_WINDOW_MOVED) {
                 win_on_move(win);
             }
             break;
         }
-        case SDL_WINDOWEVENT_EXPOSED: {
+        case SDL_EVENT_WINDOW_EXPOSED: {
             handle_frame();
             break;
         }
-        default: return 1;
+        default: return true;
     }
 
-    return 0;
+    return false;
 }
 
 static void handle_frame() {
@@ -92,15 +94,19 @@ void app_init(void (*tick)(f32)) {
         return;
     }
 
-    SDL_SetHint(SDL_HINT_WINDOWS_DISABLE_THREAD_NAMING, "1");
     SDL_SetHint(SDL_HINT_QUIT_ON_LAST_WINDOW_CLOSE, "0");
 
-    if(SDL_Init(SDL_INIT_VIDEO) < 0) {
+    if(!SDL_Init(SDL_INIT_VIDEO)) {
         printf("Failed to initialize SDL: %s\n", SDL_GetError());
         return;
     }
 
-    SDL_GetDisplayBounds(0, &DISPLAY_BOUNDS);
+    SDL_Point zero_zero = {.x = 0, .y = 0};
+    SDL_DisplayID displayId = SDL_GetDisplayForPoint(&zero_zero);
+    if(!SDL_GetDisplayBounds(displayId, &DISPLAY_BOUNDS)) {
+        printf(SDL_GetError());
+        return;
+    }
     SCREEN_W = DISPLAY_BOUNDS.w;
     SCREEN_H = DISPLAY_BOUNDS.h;
     WH_DELTA = (SCREEN_W - SCREEN_H) / 2;

@@ -2,6 +2,7 @@
 #include "game_state.h"
 #include "window.h"
 #include "stdio.h"
+#include "stdlib.h"
 
 void level_load(Level *level) {
     isLevelLoading = true;

@@ -2,7 +2,7 @@
 
 #include "number.h"
 #include "window.h"
-#include "SDL2/SDL.h"
+#include "SDL3/SDL.h"
 #include "list.h"
 
 extern SDL_Rect DISPLAY_BOUNDS;

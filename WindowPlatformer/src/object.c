@@ -2,6 +2,7 @@
 #include "world.h"
 #include "color.h"
 #include "stdio.h"
+#include "stdlib.h"
 
 Object *obj_new(LevelObject lObj) {
     Object *obj = (Object*)malloc(sizeof(Object));
@@ -40,7 +41,7 @@ void obj_draw(Object *obj, Window *win) {
     u8 r, g, b;
     col_get_rgb(cpal_get_col(win->colors, obj->type), &r, &g, &b);
 
-    SDL_Rect rect = obj->output;
+    SDL_FRect rect = obj->output;
     rect.x -= win->screenLoc.x;
     rect.y -= win->screenLoc.y;
 

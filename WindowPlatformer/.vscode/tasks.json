@@ -4,7 +4,7 @@
         {
             "label": "Build and Run C/C++",
             "command": [
-                "gcc -I ./include -L ./lib -o ./build/main (Get-ChildItem ./src/*.c) -lmingw32 -lSDL2main -lSDL2 -lSDL2_image",
+                "gcc -I ./include -L ./lib -o ./build/main (Get-ChildItem ./src/*.c) -lmingw32 -lSDL3",
                 "\n./build/main"
             ],
             "type": "shell",

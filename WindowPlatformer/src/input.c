@@ -1,21 +1,22 @@
 #include "input.h"
-#include "SDL2/SDL.h"
+#include "SDL3/SDL.h"
 #include "application.h"
 #include "list.h"
 #include "main_menu.h"
 #include "stdio.h"
+#include "stdlib.h"
 #include "game_state.h"
 
-static const uint32_t KEY_COUNT = KC_NONE;
-static const uint32_t MAX_CONCURRENT_KEYS = 8;
+static const u32 KEY_COUNT = KC_NONE;
+static const u32 MAX_CONCURRENT_KEYS = 8;
 
 static List *additionPending, *removalPending;
 static bool *keyState, *lastKeyState;
 
 
-KeyCode sdl_key_to_keycode(SDL_KeyCode kc) {
-    if(kc >= SDLK_a && kc <= SDLK_z) {
-        return (KeyCode)(kc - SDLK_a + KC_A);
+KeyCode sdl_key_to_keycode(u32 kc) {
+    if(kc >= SDLK_A && kc <= SDLK_Z) {
+        return (KeyCode)(kc - SDLK_A + KC_A);
     }
 
     if(kc >= SDLK_0 && kc <= SDLK_9) {
@@ -60,17 +61,18 @@ void input_handle_events() {
     SDL_Event evt;
     while(SDL_PollEvent(&evt)) {
         switch(evt.type) {
-            case SDL_QUIT: {
+            case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+            case SDL_EVENT_QUIT: {
                 app_quit();
                 return;
             };
-            case SDL_KEYDOWN: {
-                if(evt.key.keysym.sym == SDLK_ESCAPE) {
+            case SDL_EVENT_KEY_DOWN: {
+                if(evt.key.key == SDLK_ESCAPE) {
                     app_quit();
                     return;
                 }
 
-                KeyCode key = sdl_key_to_keycode((SDL_KeyCode)evt.key.keysym.sym);
+                KeyCode key = sdl_key_to_keycode(evt.key.key);
 
                 if(key != KC_NONE && !keyState[(size_t)key]) {
                     list_append(additionPending, (void*)key);
@@ -78,8 +80,8 @@ void input_handle_events() {
 
                 break;
             };
-            case SDL_KEYUP: {
-                KeyCode key = sdl_key_to_keycode((SDL_KeyCode)evt.key.keysym.sym);
+            case SDL_EVENT_KEY_UP: {
+                KeyCode key = sdl_key_to_keycode(evt.key.key);
 
                 if(key != KC_NONE && keyState[(size_t)key]) {
                     list_append(removalPending, (void*)key);
@@ -87,7 +89,7 @@ void input_handle_events() {
 
                 break;
             };
-            case SDL_MOUSEBUTTONDOWN: {
+            case SDL_EVENT_MOUSE_BUTTON_DOWN: {
                 uint8_t mb = evt.button.button;
                 KeyCode key = KC_NONE;
 
@@ -103,7 +105,7 @@ void input_handle_events() {
                 
                 break;
             };
-            case SDL_MOUSEBUTTONUP: {
+            case SDL_EVENT_MOUSE_BUTTON_UP: {
                 uint8_t mb = evt.button.button;
                 KeyCode key = KC_NONE;
 

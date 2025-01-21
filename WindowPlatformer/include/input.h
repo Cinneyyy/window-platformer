@@ -2,8 +2,9 @@
 
 typedef enum KeyCode KeyCode;
 
-#include "SDL2/SDL.h"
+#include "SDL3/SDL.h"
 #include "stdbool.h"
+#include "number.h"
 
 typedef enum KeyCode {
     KC_A,
@@ -78,7 +79,7 @@ typedef enum KeyCode {
 } KeyCode;
 
 
-KeyCode sdl_key_to_keycode(SDL_KeyCode kc);
+KeyCode sdl_key_to_keycode(u32 kc);
 void input_init(void);
 void input_handle_events(void);
 
