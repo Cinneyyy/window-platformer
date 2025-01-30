@@ -5,6 +5,7 @@
 #include "game_state.h"
 #include "level.h"
 #include "main_menu.h"
+#include "pthread.h"
 
 SDL_Rect DISPLAY_BOUNDS;
 i32 SCREEN_W, SCREEN_H, WH_DELTA;
@@ -14,14 +15,11 @@ static bool initiated = false;
 static bool isRunning = false;
 static void (*tickFpt)(f32);
 static u32 lastFrame;
-
-
-static void handle_frame();
+static pthread_t *gameThread;
 
 static bool filter_window_events(void *userdata, SDL_Event *evt) {
-    if(evt->type == SDL_EVENT_WINDOW_EXPOSED) {
-        printf("E");
-    }
+    printf(" (%i) ", evt->type);
+    return true;
 
     if(isLevelLoading) {
         return true;
@@ -58,35 +56,33 @@ static bool filter_window_events(void *userdata, SDL_Event *evt) {
             }
             break;
         }
-        case SDL_EVENT_WINDOW_EXPOSED: {
-            handle_frame();
-            break;
-        }
         default: return true;
     }
 
     return false;
 }
 
-static void handle_frame() {
-    input_handle_events();
 
-    u32 now = SDL_GetTicks();
-    deltaTime = (f32)(now - lastFrame) / 1000.0f;
-    totalTime = (f32)SDL_GetTicks() / 1000.0f;
-    lastFrame = now;
+static void *game_thread_run(void *data) {
+    while(isRunning) {
+        //input_advance();
 
-    tickFpt(deltaTime);
+        u32 now = SDL_GetTicks();
+        deltaTime = (f32)(now - lastFrame) / 1000.0f;
+        totalTime = (f32)SDL_GetTicks() / 1000.0f;
+        lastFrame = now;
 
-    if(gameState.loadedLevel) {
-        for(size_t i = 0; i < gameState.loadedLevel->windowCount; i++) {
-            win_redraw(gameState.windows[i]);
+        tickFpt(deltaTime);
+
+        if(gameState.loadedLevel) {
+            for(size_t i = 0; i < gameState.loadedLevel->windowCount; i++) {
+                win_redraw(gameState.windows[i]);
+            }
         }
+
+        SDL_Delay(1);
     }
-
-    SDL_Delay(1);
 }
-
 
 void app_init(void (*tick)(f32)) {
     if(initiated) {
@@ -114,7 +110,7 @@ void app_init(void (*tick)(f32)) {
     tickFpt = tick;
     input_init();
 
-    SDL_AddEventWatch(&filter_window_events, NULL);
+    //SDL_AddEventWatch(&filter_window_events, NULL);
 
     initiated = true;
 }
@@ -131,8 +127,13 @@ void app_run(void) {
     deltaTime = 0.0f;
     totalTime = 0.0f;
 
+    pthread_create(gameThread, NULL, &game_thread_run, NULL);
+
     while(isRunning) {
-        handle_frame();
+        SDL_Event evt;
+        while(SDL_PollEvent(&evt)) {
+            //printf("%i ", evt.type);
+        }
     }
 
     if(gameState.loadedLevel) {

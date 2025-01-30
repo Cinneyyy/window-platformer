@@ -34,7 +34,6 @@ typedef enum KeyCode {
     KC_Y,
     KC_Z,
 
-    KC_0,
     KC_1,
     KC_2,
     KC_3,
@@ -44,6 +43,7 @@ typedef enum KeyCode {
     KC_7,
     KC_8,
     KC_9,
+    KC_0,
 
     KC_F1,
     KC_F2,
@@ -82,6 +82,7 @@ typedef enum KeyCode {
 KeyCode sdl_key_to_keycode(u32 kc);
 void input_init(void);
 void input_handle_events(void);
+void input_advance(void);
 
 bool key_helt(KeyCode kc);
 bool key_down(KeyCode kc);

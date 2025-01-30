@@ -50,6 +50,37 @@ KeyCode sdl_key_to_keycode(u32 kc) {
     }
 }
 
+SDL_Scancode keycode_to_sdl_scancode(KeyCode kc) {
+    if(kc >= KC_A && kc <= KC_Z) {
+        return (SDL_Scancode)(kc - KC_A + SDL_SCANCODE_A);
+    }
+
+    if(kc >= KC_0 && kc <= KC_9) {
+        return (SDL_Scancode)(kc - KC_0 + SDL_SCANCODE_0);
+    }
+
+    if(kc >= KC_F1 && kc <= KC_F12) {
+        return (SDL_Scancode)(kc - KC_F1 + SDL_SCANCODE_F1);
+    }
+
+    switch(kc) {
+        case KC_LEFT: return SDL_SCANCODE_LEFT;
+        case KC_RIGHT: return SDL_SCANCODE_RIGHT;
+        case KC_UP: return SDL_SCANCODE_UP;
+        case KC_DOWN: return SDL_SCANCODE_DOWN;
+
+        case KC_CTRL: return SDL_SCANCODE_LCTRL;
+        case KC_SHIFT: return SDL_SCANCODE_LSHIFT;
+        case KC_ALT: return SDL_SCANCODE_LALT;
+
+        case KC_TAB: return SDL_SCANCODE_TAB;
+        case KC_RETURN: return SDL_SCANCODE_RETURN;
+        case KC_SPACE: return SDL_SCANCODE_SPACE;
+
+        default: return SDL_SCANCODE_UNKNOWN;
+    }
+}
+
 void input_init() {
     additionPending = list_new(MAX_CONCURRENT_KEYS);
     removalPending = list_new(MAX_CONCURRENT_KEYS);
@@ -123,7 +154,9 @@ void input_handle_events() {
             }
         }
     }
+}
 
+void input_advance(void) {
     memcpy(lastKeyState, keyState, sizeof(bool) * KEY_COUNT);
 
     for(size_t i = 0; i < removalPending->count; i++) {
@@ -138,13 +171,22 @@ void input_handle_events() {
 }
 
 bool key_helt(KeyCode key) {
+    SDL_PumpEvents();
+    const bool *state = SDL_GetKeyboardState(NULL);
+    return state[keycode_to_sdl_scancode(key)];
     return keyState[(size_t)key];
 }
 
 bool key_down(KeyCode key) {
+    SDL_PumpEvents();
+    const bool *state = SDL_GetKeyboardState(NULL);
+    return state[keycode_to_sdl_scancode(key)];
     return keyState[(size_t)key] && !lastKeyState[(size_t)key];
 }
 
 bool key_up(KeyCode key) {
-    return !keyState[(size_t)key] && lastKeyState[(size_t)key];
+    SDL_PumpEvents();
+        const bool *state = SDL_GetKeyboardState(NULL);
+    return !state[keycode_to_sdl_scancode(key)];
+        return !keyState[(size_t)key] && lastKeyState[(size_t)key];
 }
