@@ -1,4 +1,4 @@
 #include "game_state.h"
 
-GameState gameState;
+GameState gameState = {};
 bool isLevelLoading = false;

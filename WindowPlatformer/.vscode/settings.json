@@ -19,6 +19,8 @@
         "stdbool.h": "c",
         "stdio.h": "c",
         "utils.h": "c",
-        "windows.h": "c"
+        "windows.h": "c",
+        "xlib.h": "c",
+        "keysym.h": "c"
     }
 }

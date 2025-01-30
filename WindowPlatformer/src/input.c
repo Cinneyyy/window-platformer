@@ -50,7 +50,6 @@ static SDL_Scancode keycode_to_sdl_scancode(KeyCode kc) {
 #ifdef WINDOWS_BUILD
 #include "windows.h"
 
-
 static int kc_to_vk(KeyCode kc) {
     const int VK_A = 0x41;
     const int VK_1 = 0x31;
@@ -89,16 +88,51 @@ static int kc_to_vk(KeyCode kc) {
 }
 
 
+void input_init(void) {
+}
+
 bool key_held(KeyCode kc) {
     return GetAsyncKeyState(kc_to_vk(kc)) < 0;
 }
+
 bool key_down(KeyCode kc) {
     return GetAsyncKeyState(kc_to_vk(kc)) & 0x0001 != 0;
 }
+
+bool key_up(KeyCode kc) {
+    return false;
+}
 #endif
 
+// TODO: impl
 #ifdef LINUX_BUILD
+
+#define KeyCode __LKC
+#include "X11/Xlib.h"
+#include "X11/keysym.h"
+#undef KeyCode
+
+static Display *display;
+static __LKC spaceKey;
+
+
+void input_init(void) {
+    display = XOpenDisplay(NULL);
+}
+
+bool key_held(KeyCode kc) {
+    return GetAsyncKeyState(kc_to_vk(kc)) < 0;
+}
+
+bool key_down(KeyCode kc) {
+    return GetAsyncKeyState(kc_to_vk(kc)) & 0x0001 != 0;
+}
+
+bool key_up(KeyCode kc) {
+    return false;
+}
 #endif
 
+// TODO: impl
 #ifdef MAC_BUILD
 #endif

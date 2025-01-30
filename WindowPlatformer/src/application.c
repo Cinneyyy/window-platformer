@@ -17,57 +17,14 @@ static void (*tickFpt)(f32);
 static u32 lastFrame;
 static pthread_t *gameThread;
 
-static bool filter_window_events(void *userdata, SDL_Event *evt) {
-    printf(" (%i) ", evt->type);
-    return true;
-
-    if(isLevelLoading) {
-        return true;
-    }
-
-    if(evt->type >= SDL_EVENT_WINDOW_FIRST && evt->type <= SDL_EVENT_WINDOW_LAST) {
-        return true;
-    }
-
-    switch(evt->window.type) {
-        case SDL_EVENT_WINDOW_CLOSE_REQUESTED: {
-            app_quit(); // TODO: load main menu instead of quitting, if it's not already loaded
-            break;
-        }
-        case SDL_EVENT_WINDOW_RESIZED:
-        case SDL_EVENT_WINDOW_MOVED: {
-            Window *win = NULL;
-            for(size_t i = 0; i < gameState.winCount; i++) {
-                if(gameState.windows[i]->id == evt->window.windowID) {
-                    win = gameState.windows[i];
-                    break;
-                }
-            }
-
-            if(!win) {
-                break;
-            }
-
-            if(evt->window.type == SDL_EVENT_WINDOW_RESIZED) {
-                win_on_resize(win);
-            }
-            else if(evt->window.type == SDL_EVENT_WINDOW_MOVED) {
-                win_on_move(win);
-            }
-            break;
-        }
-        default: return true;
-    }
-
-    return false;
-}
-
 
 static void *game_thread_run(void *data) {
+    i32 fpsCounter = 0;
+
     while(isRunning) {
         u32 now = SDL_GetTicks();
         deltaTime = (f32)(now - lastFrame) / 1000.0f;
-        totalTime = (f32)SDL_GetTicks() / 1000.0f;
+        totalTime = (f32)now / 1000.0f;
         lastFrame = now;
 
         tickFpt(deltaTime);
@@ -81,6 +38,63 @@ static void *game_thread_run(void *data) {
         SDL_Delay(1);
     }
 }
+
+static Window *get_window_from_handle(size_t hwnd) {
+    printf("Trying to get window %i\n", hwnd);
+    for(size_t i = 0; i < gameState.winCount; i++) {
+        if(gameState.windows[i] && gameState.windows[i]->id == hwnd) {
+            printf("Found window: %i %i %i %i", i, hwnd, gameState.windows[i]->screenSize.x, gameState.windows[i]->screenSize.y);
+            return gameState.windows[i];
+        }
+    }
+
+    return NULL;
+}
+
+static bool evt_watch(void *data, SDL_Event *evt) {
+    switch(evt->type) {
+        case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+        case SDL_EVENT_QUIT: {
+            Window *win = get_window_from_handle(evt->window.windowID);
+
+            if(!win) {
+                app_quit();
+                break;
+            }
+
+            if(gameState.loadedLevel) {
+                level_unload_current();
+                mm_load();
+            }
+            else {
+                app_quit();
+            }
+
+            break;
+        }
+        case SDL_EVENT_WINDOW_RESIZED:
+        case SDL_EVENT_WINDOW_MOVED: {
+            Window *win = get_window_from_handle(evt->window.windowID);
+
+            if(!win) {
+                break;
+            }
+
+            if(evt->window.type == SDL_EVENT_WINDOW_RESIZED) {
+                win_on_resize(win);
+            }
+            else if(evt->window.type == SDL_EVENT_WINDOW_MOVED) {
+                win_on_move(win);
+            }
+
+            break;
+        }
+        default: break;
+    }
+
+    return false;
+}
+
 
 void app_init(void (*tick)(f32)) {
     if(initiated) {
@@ -106,8 +120,9 @@ void app_init(void (*tick)(f32)) {
     WH_DELTA = (SCREEN_W - SCREEN_H) / 2;
 
     tickFpt = tick;
+    input_init();
 
-    //SDL_AddEventWatch(&filter_window_events, NULL);
+    SDL_AddEventWatch(&evt_watch, NULL);
 
     initiated = true;
 }
@@ -129,7 +144,7 @@ void app_run(void) {
     while(isRunning) {
         SDL_Event evt;
         while(SDL_PollEvent(&evt)) {
-            //printf("%i ", evt.type);
+            continue;
         }
     }
 

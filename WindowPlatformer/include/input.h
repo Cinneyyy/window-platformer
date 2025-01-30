@@ -43,7 +43,7 @@ typedef enum KeyCode {
     KC_7,
     KC_8,
     KC_9,
-    
+
     KC_0,
 
     KC_F1,
@@ -80,5 +80,8 @@ typedef enum KeyCode {
 } KeyCode;
 
 
+void input_init(void);
+
 bool key_held(KeyCode kc);
 bool key_down(KeyCode kc);
+bool key_up(KeyCode kc);
