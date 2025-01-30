@@ -90,8 +90,8 @@ static void tick(float dt) {
 
     vel.y += GRAVITY * dt;
 
-    bool rInput = key_helt(KC_RIGHT) || key_helt(KC_D);
-    bool lInput = key_helt(KC_RIGHT) || key_helt(KC_A);
+    bool rInput = key_held(KC_RIGHT) || key_held(KC_D);
+    bool lInput = key_held(KC_RIGHT) || key_held(KC_A);
 
     if(rInput) {
         vel.x += H_ACC * dt;
@@ -109,12 +109,13 @@ static void tick(float dt) {
 
     vel.x = clampf(vel.x, -MAX_H_SPEED, MAX_H_SPEED);
 
-    if(key_helt(KC_DOWN) || key_helt(KC_S)) {
+    if(key_held(KC_DOWN) || key_held(KC_S)) {
         vel.y += STOMP_SPEED * dt;
     }
 
-    if(grounded && (key_down(KC_W) || key_down(KC_UP) || key_down(KC_SPACE))) {
+    if(grounded && (key_held(KC_W) || key_held(KC_UP) || key_held(KC_SPACE))) {
         vel.y = JUMP_STRENGTH;
+        grounded = false;
     }
 
     V2f newPos = {
@@ -131,7 +132,7 @@ static void tick(float dt) {
     if(col) {
         switch(col->type) {
             case OBJ_BREAKABLE: {
-                if(key_helt(KC_S) || key_helt(KC_DOWN)) {
+                if(key_held(KC_S) || key_held(KC_DOWN)) {
                     col->enabled = false;
                 }
                 else {

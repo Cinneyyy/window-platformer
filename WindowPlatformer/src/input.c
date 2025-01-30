@@ -8,49 +8,9 @@
 #include "game_state.h"
 
 static const u32 KEY_COUNT = KC_NONE;
-static const u32 MAX_CONCURRENT_KEYS = 8;
-
-static List *additionPending, *removalPending;
-static bool *keyState, *lastKeyState;
 
 
-KeyCode sdl_key_to_keycode(u32 kc) {
-    if(kc >= SDLK_A && kc <= SDLK_Z) {
-        return (KeyCode)(kc - SDLK_A + KC_A);
-    }
-
-    if(kc >= SDLK_0 && kc <= SDLK_9) {
-        return (KeyCode)(kc - SDLK_0 + KC_0);
-    }
-
-    if(kc >= SDLK_F1 && kc <= SDLK_F12) {
-        return (KeyCode)(kc - SDLK_F1 + KC_F1);
-    }
-
-    switch(kc) {
-        case SDLK_LEFT: return KC_LEFT;
-        case SDLK_RIGHT: return KC_RIGHT;
-        case SDLK_UP: return KC_UP;
-        case SDLK_DOWN: return KC_DOWN;
-
-        case SDLK_LCTRL:
-        case SDLK_RCTRL: return KC_CTRL;
-
-        case SDLK_LSHIFT:
-        case SDLK_RSHIFT: return KC_SHIFT;
-
-        case SDLK_LALT:
-        case SDLK_RALT: return KC_ALT;
-
-        case SDLK_TAB: return KC_TAB;
-        case SDLK_RETURN: return KC_RETURN;
-        case SDLK_SPACE: return KC_SPACE;
-
-        default: return KC_NONE;
-    }
-}
-
-SDL_Scancode keycode_to_sdl_scancode(KeyCode kc) {
+static SDL_Scancode keycode_to_sdl_scancode(KeyCode kc) {
     if(kc >= KC_A && kc <= KC_Z) {
         return (SDL_Scancode)(kc - KC_A + SDL_SCANCODE_A);
     }
@@ -81,112 +41,64 @@ SDL_Scancode keycode_to_sdl_scancode(KeyCode kc) {
     }
 }
 
-void input_init() {
-    additionPending = list_new(MAX_CONCURRENT_KEYS);
-    removalPending = list_new(MAX_CONCURRENT_KEYS);
-    keyState = (bool*)calloc(KEY_COUNT, sizeof(bool));
-    lastKeyState = (bool*)calloc(KEY_COUNT, sizeof(bool));
-}
 
-void input_handle_events() {
-    SDL_Event evt;
-    while(SDL_PollEvent(&evt)) {
-        switch(evt.type) {
-            case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
-            case SDL_EVENT_QUIT: {
-                app_quit();
-                return;
-            };
-            case SDL_EVENT_KEY_DOWN: {
-                if(evt.key.key == SDLK_ESCAPE) {
-                    app_quit();
-                    return;
-                }
+// For debug purposes, editor greys out the code otherwise
+//#define WINDOWS_BUILD
+//#define LINUX_BUILD
+//#define MAC_BUILD
 
-                KeyCode key = sdl_key_to_keycode(evt.key.key);
+#ifdef WINDOWS_BUILD
+#include "windows.h"
 
-                if(key != KC_NONE && !keyState[(size_t)key]) {
-                    list_append(additionPending, (void*)key);
-                }
 
-                break;
-            };
-            case SDL_EVENT_KEY_UP: {
-                KeyCode key = sdl_key_to_keycode(evt.key.key);
+static int kc_to_vk(KeyCode kc) {
+    const int VK_A = 0x41;
+    const int VK_1 = 0x31;
+    const int VK_0 = 0x30;
 
-                if(key != KC_NONE && keyState[(size_t)key]) {
-                    list_append(removalPending, (void*)key);
-                }
+    if(kc >= KC_A && kc <= KC_Z) {
+        return kc - KC_A + VK_A;
+    }
 
-                break;
-            };
-            case SDL_EVENT_MOUSE_BUTTON_DOWN: {
-                uint8_t mb = evt.button.button;
-                KeyCode key = KC_NONE;
+    if(kc >= KC_1 && kc <= KC_9) {
+        return kc - KC_0 + VK_1;
+    }
 
-                switch(mb) {
-                    case 1: key = KC_LMB; break;
-                    case 2: key = KC_MMB; break;
-                    case 3: key = KC_RMB; break;
-                }
+    if(kc >= KC_F1 && kc <= KC_F12) {
+        return kc - KC_F1 + VK_F1;
+    }
 
-                if(key != KC_NONE && !keyState[(size_t)key]) {
-                    list_append(additionPending, (void*)key);
-                }
-                
-                break;
-            };
-            case SDL_EVENT_MOUSE_BUTTON_UP: {
-                uint8_t mb = evt.button.button;
-                KeyCode key = KC_NONE;
+    switch(kc) {
+        case KC_0: return VK_0;
 
-                switch(mb) {
-                    case 1: key = KC_LMB; break;
-                    case 2: key = KC_MMB; break;
-                    case 3: key = KC_RMB; break;
-                }
-                
-                if(key != KC_NONE && keyState[(size_t)key]) {
-                    list_append(removalPending, (void*)key);
-                }
-                
-                break;
-            }
-        }
+        case KC_LEFT: return VK_LEFT;
+        case KC_RIGHT: return VK_RIGHT;
+        case KC_UP: return VK_UP;
+        case KC_DOWN: return VK_DOWN;
+
+        case KC_CTRL: return VK_LCONTROL;
+        case KC_SHIFT: return VK_LSHIFT;
+        case KC_ALT: return VK_LMENU;
+
+        case KC_TAB: return VK_TAB;
+        case KC_RETURN: return VK_RETURN;
+        case KC_SPACE: return VK_SPACE;
+
+        default: return 0;
     }
 }
 
-void input_advance(void) {
-    memcpy(lastKeyState, keyState, sizeof(bool) * KEY_COUNT);
 
-    for(size_t i = 0; i < removalPending->count; i++) {
-        keyState[(size_t)list_at(removalPending, i)] = false;
-    }
-    for(size_t i = 0; i < additionPending->count; i++) {
-        keyState[(size_t)list_at(additionPending, i)] = true;
-    }
-
-    list_clear(removalPending);
-    list_clear(additionPending);
+bool key_held(KeyCode kc) {
+    return GetAsyncKeyState(kc_to_vk(kc)) < 0;
 }
-
-bool key_helt(KeyCode key) {
-    SDL_PumpEvents();
-    const bool *state = SDL_GetKeyboardState(NULL);
-    return state[keycode_to_sdl_scancode(key)];
-    return keyState[(size_t)key];
+bool key_down(KeyCode kc) {
+    return GetAsyncKeyState(kc_to_vk(kc)) & 0x0001 != 0;
 }
+#endif
 
-bool key_down(KeyCode key) {
-    SDL_PumpEvents();
-    const bool *state = SDL_GetKeyboardState(NULL);
-    return state[keycode_to_sdl_scancode(key)];
-    return keyState[(size_t)key] && !lastKeyState[(size_t)key];
-}
+#ifdef LINUX_BUILD
+#endif
 
-bool key_up(KeyCode key) {
-    SDL_PumpEvents();
-        const bool *state = SDL_GetKeyboardState(NULL);
-    return !state[keycode_to_sdl_scancode(key)];
-        return !keyState[(size_t)key] && lastKeyState[(size_t)key];
-}
+#ifdef MAC_BUILD
+#endif

@@ -4,8 +4,15 @@
         {
             "label": "Build and Run C/C++",
             "command": [
-                "gcc -I ./include -L ./lib -o ./build/main (Get-ChildItem ./src/*.c) -lmingw32 -lSDL3",
-                "\n./build/main"
+                "gcc",
+                "-I ./include", // Include directory
+                "-L ./lib", // Library directory
+                "-o ./build/main", // Output file name
+                "(Get-ChildItem ./src/*.c)", // Source files
+                "-lmingw32 -lSDL3", // Libraries
+                "-D WINDOWS_BUILD", // Pre-processor definitions
+
+                "\n./build/main" // Run output
             ],
             "type": "shell",
             "group": {

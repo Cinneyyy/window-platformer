@@ -65,8 +65,6 @@ static bool filter_window_events(void *userdata, SDL_Event *evt) {
 
 static void *game_thread_run(void *data) {
     while(isRunning) {
-        //input_advance();
-
         u32 now = SDL_GetTicks();
         deltaTime = (f32)(now - lastFrame) / 1000.0f;
         totalTime = (f32)SDL_GetTicks() / 1000.0f;
@@ -108,7 +106,6 @@ void app_init(void (*tick)(f32)) {
     WH_DELTA = (SCREEN_W - SCREEN_H) / 2;
 
     tickFpt = tick;
-    input_init();
 
     //SDL_AddEventWatch(&filter_window_events, NULL);
 
