@@ -40,10 +40,8 @@ static void *game_thread_run(void *data) {
 }
 
 static Window *get_window_from_handle(size_t hwnd) {
-    printf("Trying to get window %i\n", hwnd);
     for(size_t i = 0; i < gameState.winCount; i++) {
         if(gameState.windows[i] && gameState.windows[i]->id == hwnd) {
-            printf("Found window: %i %i %i %i", i, hwnd, gameState.windows[i]->screenSize.x, gameState.windows[i]->screenSize.y);
             return gameState.windows[i];
         }
     }
@@ -115,6 +113,7 @@ void app_init(void (*tick)(f32)) {
         printf(SDL_GetError());
         return;
     }
+    
     SCREEN_W = DISPLAY_BOUNDS.w;
     SCREEN_H = DISPLAY_BOUNDS.h;
     WH_DELTA = (SCREEN_W - SCREEN_H) / 2;

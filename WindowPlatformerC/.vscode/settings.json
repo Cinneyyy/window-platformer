@@ -21,6 +21,10 @@
         "utils.h": "c",
         "windows.h": "c",
         "xlib.h": "c",
-        "keysym.h": "c"
+        "keysym.h": "c",
+        "*.rh": "c",
+        "stdlib.h": "c",
+        "world.h": "c",
+        "color.h": "c"
     }
 }
