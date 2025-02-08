@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace src;
 
@@ -25,4 +27,9 @@ public static class Ext
     public static i32 Ceil(this f32 f) => (i32)MathF.Ceiling(f);
 
     public static SDL_bool ToSdlBool(this bool b) => b ? SDL_bool.SDL_TRUE : SDL_bool.SDL_FALSE;
+
+    public static T FirstWhere<T>(this IEnumerable<T> coll, Func<T, bool> predicate)
+        => coll.Where(predicate).First();
+    public static T? FirstOrDefaultWhere<T>(this IEnumerable<T> coll, Func<T, bool> predicate)
+        => coll.Where(predicate).FirstOrDefault();
 }

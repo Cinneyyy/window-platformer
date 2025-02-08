@@ -34,6 +34,7 @@ public class GameObject
     public void OnResize()
         => (output.w, output.h) = Screen.WorldSizeToScreen(size);
 
+    // This function calleth not upon SDL_RenderPresent, such that a plethora of objects may be drawn in just one instant, whenceafter SDL_RenderPresent shall be invoked.
     public void Draw(Window win)
     {
         if(!enabled)

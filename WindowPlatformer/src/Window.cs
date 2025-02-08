@@ -63,31 +63,42 @@ public class Window : IDisposable
         SDL_SetRenderDrawColor(sdlRend, r, g, b, 0xff).ThrowSdlErr();
         SDL_RenderClear(sdlRend).ThrowSdlErr();
 
+        foreach(GameObject o in GameState.objects!)
+            o.Draw(this);
 
+        GameState.player!.Draw(this);
+
+        SDL_RenderPresent(sdlRend);
     }
 
-    public void SetSize(V2f wSize)
-    {
-        worldSize = wSize;
-        screenSize = Screen.WorldSizeToScreen(wSize);
-        SDL_SetWindowSize(sdlWin, screenSize.x, screenSize.y);
-    }
-
-    public void SetLoc(V2f wPt)
+    public void SetWorldLoc(V2f wPt)
     {
         worldLoc = wPt;
         screenLoc = Screen.WorldPointToScreen(wPt);
         SDL_SetWindowPosition(sdlWin, screenLoc.x, screenLoc.y);
     }
 
+    public void SetWorldSize(V2f wSz)
+    {
+        worldSize = wSz;
+        screenSize = Screen.WorldSizeToScreen(wSz);
+        SDL_SetWindowSize(sdlWin, screenSize.x, screenSize.y);
+    }
+
+    public void SetScreenLoc(V2i sPt)
+    {
+        screenLoc = sPt;
+        worldLoc = Screen.WorldPointFromScreen(sPt);
+    }
+
+    public void SetScreenSize(V2i sSz)
+    {
+        screenSize = sSz;
+        worldSize = Screen.WorldSizeFromScreen(sSz);
+    }
+
     public void SetTitle(string title)
         => SDL_SetWindowTitle(sdlWin, title);
-
-    public void ComputeWorldLoc()
-        => worldLoc = Screen.WorldPointFromScreen(screenLoc);
-
-    public void ComputeWorldSize()
-        => worldSize = Screen.WorldSizeFromScreen(screenSize);
 
 
     void IDisposable.Dispose()
