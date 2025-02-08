@@ -27,6 +27,7 @@ public static class Application
         SDL_AddEventWatch(EventWatch, nint.Zero);
 
         Screen.Init();
+        Input.Init();
 
         initiated = true;
     }
@@ -73,28 +74,28 @@ public static class Application
                 else
                     Quit();
 
-                break;
+                return 0;
             }
             case SDL_EventType.SDL_WINDOWEVENT:
             {
                 if(!GameState.isLevelLoaded)
-                    break;
+                    return 0;
 
                 Window? win = GameState.TryGetWindowFromId(evt->window.windowID);
 
                 if(win is null)
-                    break;
+                    return 0;
 
                 if(evt->window.windowEvent == SDL_WindowEventID.SDL_WINDOWEVENT_MOVED)
                     win.SetScreenLoc(new(evt->window.data1, evt->window.data2));
                 else if(evt->window.windowEvent == SDL_WindowEventID.SDL_WINDOWEVENT_RESIZED)
                     win.SetScreenSize(new(evt->window.data1, evt->window.data2));
 
-                break;
+                return 0;
             }
         }
 
-        return 0;
+        return 1;
     }
 
     private static void GameThreadRun()
@@ -105,6 +106,8 @@ public static class Application
             deltaTime = (now - lastFrame) / 1000f;
             totalTime = now / 1000f;
             lastFrame = now;
+
+            Input.Tick();
 
             tick?.Invoke(deltaTime);
 

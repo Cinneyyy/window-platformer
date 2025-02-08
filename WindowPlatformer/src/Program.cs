@@ -15,6 +15,11 @@ public class Program
         GameState.LoadLevel(in level);
 
         Application.tick += PlayerController.Tick;
+        Application.tick += dt =>
+        {
+            if(Input.KeyDown(Key.R))
+                GameState.ReloadCurrentLevel();
+        };
 
         Application.Run();
     }

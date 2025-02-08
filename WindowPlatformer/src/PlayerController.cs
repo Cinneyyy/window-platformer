@@ -1,23 +1,21 @@
-using System.Linq;
-using System.Numerics;
+using System;
 
 namespace src;
 
 public static class PlayerController
 {
+    public const f32 TIME_SCALE = 0.8f;
     public const f32 GRAVITY = -10f;
     public const f32 STOMP_SPEED = -40f;
     public const f32 JUMP_STRENGTH = 3.25f;
     public const f32 H_ACC = 40f;
     public const f32 H_DAMP = 60f;
     public const f32 MAX_H_SPEED = 2.25f;
-    public const f32 COYOTE_TIME = 0.1f;
-    public const f32 JUMP_TOLERANCE = 0.1f;
+    //public const f32 COYOTE_TIME = 0.1f;
+    //public const f32 JUMP_TOLERANCE = 0.1f;
 
     private static bool grounded;
-    private static float jumpTimer;
     private static V2f vel;
-
 
     public static void Tick(f32 dt)
     {
@@ -27,6 +25,8 @@ public static class PlayerController
             grounded = false;
             return;
         }
+
+        dt = f32.Min(dt * TIME_SCALE, 0.01f);
 
         vel.y += GRAVITY * dt;
 
@@ -52,19 +52,13 @@ public static class PlayerController
         if(stomping)
             vel.y += STOMP_SPEED * dt;
 
-        if(Input.KeyHeld(Key.W, Key.Up, Key.Space))
-            jumpTimer = JUMP_TOLERANCE;
-        else
-            jumpTimer -= dt;
-
-        if(grounded && jumpTimer > 0f)
+        if(grounded && Input.KeyHeld(Key.W, Key.Up, Key.Space))
         {
             vel.y = JUMP_STRENGTH;
-            jumpTimer = 0f;
             grounded = false;
         }
 
-        // TODO: stronger gravity if not holding space (jump ctrl)
+        // TODO: stronger gravity if not holding space (jump ctrl), Coyote time, pre-land jump input
 
         V2f newPos = GameState.player!.loc + vel * dt;
 
@@ -98,8 +92,8 @@ public static class PlayerController
                 default: break;
             }
 
-        if(!GameState.windows!.Any(w => RectsIntersect(GameState.player.loc, GameState.player.size, w.worldLoc, w.worldSize)))
-            GameState.KillPlayer();
+        //if(!GameState.windows!.Any(w => RectsIntersect(GameState.player.loc, GameState.player.size, w.worldLoc, w.worldSize)))
+        //    GameState.KillPlayer();
     }
 
 

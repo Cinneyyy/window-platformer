@@ -52,6 +52,13 @@ public static class GameState
         windows = null;
     }
 
+    public static void ReloadCurrentLevel()
+    {
+        LevelData lv = loadedLevel!.Value;
+        UnloadCurrentLevel();
+        LoadLevel(lv);
+    }
+
     public static Window GetWindowFromId(u32 id)
     {
         if(loadedLevel is null)
