@@ -8,15 +8,50 @@ namespace src;
 
 public static class ThreadManager
 {
+    private static bool initiated;
     private static volatile bool isRunning;
     private static readonly Thread eventThread = new(EventThread);
-    private static readonly ConcurrentQueue<(Action action, TaskCompletionSource tcs)> eventThreadRequests = [];
-    private static readonly ConcurrentQueue<(Action act, TaskCompletionSource tcs)> urgentEventThreadRequests = [];
+    private static readonly ConcurrentQueue<(Action action, Ref<bool> completed)> eventThreadRequests = [];
+    private static readonly ConcurrentQueue<(Action action, Ref<bool> completed)> urgentEventThreadRequests = [];
     private static bool eventThreadReady;
+    private static bool eventThreadInitializationComplete;
 
+
+    public static bool isOnEventThread => Thread.CurrentThread == eventThread;
+
+
+    public static void Init()
+    {
+        if(initiated)
+        {
+            LOG_INFO.Error($"Cannot call {nameof(Init)} multiple times.");
+            return;
+        }
+
+        if(isRunning)
+        {
+            LOG_INFO.Error($"Cannot call {nameof(Init)} after {nameof(Run)}.");
+            return;
+        }
+
+        Input.Init();
+
+        eventThread.Start();
+
+        while(!eventThreadInitializationComplete)
+            SDL_Delay(1);
+
+        initiated = true;
+    }
 
     public static void Run()
     {
+        if(!initiated)
+        {
+            LOG_INFO.Error($"Cannot call {nameof(Run)} before {nameof(Init)} was called.");
+            return;
+        }
+
         if(isRunning)
         {
             LOG_INFO.Error($"Cannot call {nameof(Run)} multiple times.");
@@ -24,7 +59,9 @@ public static class ThreadManager
         }
 
         isRunning = true;
-        eventThread.Start();
+
+        u32 lastFrame = SDL_GetTicks();
+        f32 deltaTime = 0f;
 
         while(isRunning)
         {
@@ -34,20 +71,44 @@ public static class ThreadManager
                 continue;
             }
 
+            u32 now = SDL_GetTicks();
+            deltaTime = (now - lastFrame) / 1000f;
+            lastFrame = now;
+
+            Input.Tick();
+
+            PlayerController.Tick(deltaTime);
+
+            if(Input.KeyDown(Key.R))
+                LevelManager.ReloadLevel();
+
+            foreach(Window win in WindowEngine.windows)
+                Renderer.DrawWindow(win);
+
             SDL_Delay(1);
         }
     }
 
     public static void RunOnEventThread(Action action, bool ignoreBusyState = false)
-        => (ignoreBusyState ? urgentEventThreadRequests : eventThreadRequests).Enqueue((action, null));
-
-    public static async Task RunOnEventThreadAsync(Action action, bool ignoreBusyState = false)
     {
-        TaskCompletionSource tcs = new();
+        if(isOnEventThread)
+            action();
+        else
+            (ignoreBusyState ? urgentEventThreadRequests : eventThreadRequests).Enqueue((action, null));
+    }
 
-        (ignoreBusyState ? urgentEventThreadRequests : eventThreadRequests).Enqueue((action, tcs));
+    public static void RunOnEventThreadAndWait(Action action, bool ignoreBusyState = false)
+    {
+        if(isOnEventThread)
+            action();
+        else
+        {
+            Ref<bool> completed = new(false);
+            (ignoreBusyState ? urgentEventThreadRequests : eventThreadRequests).Enqueue((action, completed));
 
-        await tcs.Task;
+            while(!completed.value)
+                SDL_Delay(1);
+        }
     }
 
 
@@ -58,6 +119,12 @@ public static class ThreadManager
 
         Screen.Init();
 
+        eventThreadInitializationComplete = true;
+
+        // Wait until Run is called, as this already executes when Init is called
+        while(!isRunning)
+            SDL_Delay(1);
+
         eventThreadReady = true;
 
         while(isRunning)
@@ -65,16 +132,16 @@ public static class ThreadManager
             while(SDL_PollEvent(out _) == 1)
                 continue;
 
-            while(urgentEventThreadRequests.TryDequeue(out (Action action, TaskCompletionSource tcs) req))
+            while(urgentEventThreadRequests.TryDequeue(out (Action action, Ref<bool> completed) req))
             {
                 req.action?.Invoke();
-                req.tcs?.SetResult();
+                req.completed?.Set(true);
             }
 
-            while(!WindowEngine.isBusy && eventThreadRequests.TryDequeue(out (Action action, TaskCompletionSource tcs) req))
+            while(!WindowEngine.isBusy && eventThreadRequests.TryDequeue(out (Action action, Ref<bool> completed) req))
             {
                 req.action?.Invoke();
-                req.tcs?.SetResult();
+                req.completed?.Set(true);
             }
 
             SDL_Delay(1);
@@ -92,6 +159,30 @@ public static class ThreadManager
             case SDL_EventType.SDL_QUIT:
             {
                 isRunning = false;
+                break;
+            }
+            case SDL_EventType.SDL_WINDOWEVENT:
+            {
+                if(!LevelManager.ready)
+                    break;
+
+                Window win = WindowEngine.GetWindowFromId(evt->window.windowID);
+
+                if(win is null)
+                    break;
+
+                switch(evt->window.windowEvent)
+                {
+                    case SDL_WindowEventID.SDL_WINDOWEVENT_MOVED:
+                        win.screenLoc = new(evt->window.data1, evt->window.data2);
+                        break;
+                    case SDL_WindowEventID.SDL_WINDOWEVENT_RESIZED:
+                        win.screenSize = new(evt->window.data1, evt->window.data2);
+                        break;
+                    default:
+                        break;
+                }
+
                 break;
             }
             default:

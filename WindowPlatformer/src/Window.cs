@@ -10,13 +10,16 @@ public class Window
         this.movable = movable;
         this.resizable = resizable;
 
-        worldLoc = loc;
         worldSize = size;
+        worldLoc = loc;
 
         SDL_WindowFlags flags = movable ? 0 : SDL_WindowFlags.SDL_WINDOW_BORDERLESS;
         sdlWin = SDL_CreateWindow(title, screenLoc.x, screenLoc.y, screenSize.x, screenSize.y, flags);
         if(sdlWin == nint.Zero)
             ThrowSdlError("Failed to create window [@ Window.ctor]");
+
+        UpdateWindowPos();
+        UpdateWindowSize();
 
         sdlRend = SDL_CreateRenderer(sdlWin, -1, SDL_RendererFlags.SDL_RENDERER_ACCELERATED);
         if(sdlRend == nint.Zero)
@@ -50,7 +53,7 @@ public class Window
         set
         {
             _worldLoc = value;
-            _screenLoc = Screen.WorldPointToScreen(value);
+            _screenLoc = Screen.WorldPointToScreen(value + new V2f(-worldSize.x/2f, worldSize.y/2f));
         }
     }
 
@@ -74,7 +77,7 @@ public class Window
         set
         {
             _screenLoc = value;
-            _worldLoc = Screen.WorldPointFromScreen(value);
+            _worldLoc = Screen.WorldPointFromScreen(value) + new V2f(worldSize.x/2f, -worldSize.y/2f);
         }
     }
 

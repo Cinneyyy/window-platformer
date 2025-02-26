@@ -1,6 +1,6 @@
 namespace src;
 
-public enum ObjectType : byte
+public enum ObjectType : u8
 {
     Wall,
     Player,

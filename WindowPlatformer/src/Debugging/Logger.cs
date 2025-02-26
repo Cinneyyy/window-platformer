@@ -16,19 +16,31 @@ public static class Logger
 
 
     public static void Log<T>(this T obj)
-        => Log(obj, LOG_INFO);
+        => Log(obj, LOG_DEBUG);
     public static void Log<T>(this T obj, LogType log)
         => FancyConsole.WriteLine($"{log.colorFormat}[{log.name}] {obj}");
+    public static void Log(string msg)
+        => msg.Log();
+    public static void Log(string msg, LogType log)
+        => msg.Log(log);
 
     public static void LogError<T>(this T obj)
-        => LogError(obj, LOG_INFO);
+        => LogError(obj, LOG_DEBUG);
     public static void LogError<T>(this T obj, LogType log)
         => FancyConsole.WriteLine($"{log.colorFormat}%B(#500000)%[{log.name}] {obj}");
+    public static void LogError(string msg)
+        => msg.LogError();
+    public static void LogError(string msg, LogType log)
+        => msg.LogError(log);
 
     public static void LogWarning<T>(this T obj)
-        => LogWarning(obj, LOG_INFO);
+        => LogWarning(obj, LOG_DEBUG);
     public static void LogWarning<T>(this T obj, LogType log)
         => FancyConsole.WriteLine($"{log.colorFormat}%B(#2d3000)%[{log.name}] {obj}");
+    public static void LogWarning(string msg)
+        => msg.LogWarning();
+    public static void LogWarning(string msg, LogType log)
+        => msg.LogWarning(log);
 
     public static bool LogSdlError(this i32 code, string message = "")
     {

@@ -1,0 +1,13 @@
+Windows:
+- "Title"
+    1x1 0,0
+    immovable rigid
+    #ff0000
+- ""
+    1.5x0.75 2+0
+    movable resizable
+    #00ff00
+
+Objects:
+- Player 0.1x0.1 0,0
+- Wall 1.5x.15 0,-0.5

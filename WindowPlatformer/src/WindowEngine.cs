@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace src;
 
@@ -11,12 +10,12 @@ public static class WindowEngine
     public static bool isBusy { get; private set; } = false;
 
 
-    public static async Task<Window> CreateWindowAsync(WindowData data)
+    public static Window CreateWindow(WindowData data)
     {
         isBusy = true;
 
         Window win = null;
-        await ThreadManager.RunOnEventThreadAsync(() => win = new(data), true);
+        ThreadManager.RunOnEventThreadAndWait(() => win = new(data), true);
 
         windows.Add(win);
 
@@ -24,12 +23,12 @@ public static class WindowEngine
         return win;
     }
 
-    public static async Task<Window[]> CreateWindowsAsync(WindowData[] data)
+    public static Window[] CreateWindows(WindowData[] data)
     {
         isBusy = true;
 
         Window[] wins = new Window[data.Length];
-        await ThreadManager.RunOnEventThreadAsync(() =>
+        ThreadManager.RunOnEventThreadAndWait(() =>
         {
             for(i32 i = 0; i < data.Length; i++)
                 wins[i] = new(data[i]);
@@ -41,29 +40,32 @@ public static class WindowEngine
         return wins;
     }
 
-    public static async Task DestroyWindowAsync(Window win)
+    public static void DestroyWindow(Window win)
     {
         isBusy = true;
 
         windows.Remove(win);
 
-        await ThreadManager.RunOnEventThreadAsync(win.Destroy, true);
+        ThreadManager.RunOnEventThreadAndWait(win.Destroy, true);
 
         isBusy = false;
     }
 
-    public static async Task DestroyAllWindowsAsync()
+    public static void DestroyAllWindows()
     {
         isBusy = true;
 
-        await ThreadManager.RunOnEventThreadAsync(() =>
+        ThreadManager.RunOnEventThreadAndWait(() =>
         {
             foreach(Window win in windows)
                 win.Destroy();
-        });
+        }, true);
 
         windows.Clear();
 
         isBusy = false;
     }
+
+    public static Window GetWindowFromId(u32 id)
+        => windows.Find(w => w.id == id);
 }

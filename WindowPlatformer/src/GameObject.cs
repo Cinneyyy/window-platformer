@@ -5,8 +5,8 @@ public class GameObject
     internal GameObject(V2f loc, V2f size, ObjectType type)
     {
         this.type = type;
-        this.loc = loc;
         this.size = size;
+        this.loc = loc;
     }
 
     internal GameObject(GameObjectData data)
@@ -16,7 +16,6 @@ public class GameObject
 
 
     public SDL_Rect output;
-    public bool enabled = true;
     public readonly ObjectType type;
 
 
@@ -27,7 +26,10 @@ public class GameObject
         set
         {
             _loc = value;
-            (output.x, output.y) = Screen.WorldPointToScreen(value);
+            (output.x, output.y) = Screen.WorldPointToScreen(new(
+                value.x - size.x/2f,
+                value.y + size.y/2f
+            ));
         }
     }
 

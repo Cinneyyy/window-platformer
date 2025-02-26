@@ -8,9 +8,9 @@ public readonly record struct ColorPalette(u32 background, u32 wall, u32 player,
             wall: baseCol.MultiplyColor(0.5f),
             player: baseCol.MixColorLinear(0xffffff),
             danger: baseCol.InvertColor(),
-            goal: 0xffffb300,
+            goal: 0xffb300,
             breakable: baseCol.MixColorLinear(0xaaaaaa).MultiplyColor(0.35f),
-            portal: 0xff008000
+            portal: 0x008000
         )
     {
     }
