@@ -1,3 +1,6 @@
+using src.Debugging;
+using src.Dev;
+
 namespace src;
 
 public static class Screen
@@ -33,7 +36,7 @@ public static class Screen
 
     internal static void Init()
     {
-        SDL_GetDisplayBounds(0, out SDL_Rect bounds).ThrowSdlErr();
+        SDL_GetDisplayBounds(0, out SDL_Rect bounds).ThrowSdlError();
         size = new(bounds.w, bounds.h);
         whDelta = (size.x - size.y) / 2;
     }

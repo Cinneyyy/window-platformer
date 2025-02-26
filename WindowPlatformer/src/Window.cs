@@ -1,10 +1,10 @@
-using System;
+using src.Debugging;
 
 namespace src;
 
-public class Window : IDisposable
+public class Window
 {
-    public Window(string title, V2f loc, V2f size, bool movable, bool resizable, ColorPalette colors)
+    internal Window(string title, V2f loc, V2f size, bool movable, bool resizable, ColorPalette colors)
     {
         this.colors = colors;
         this.movable = movable;
@@ -12,103 +12,94 @@ public class Window : IDisposable
 
         worldLoc = loc;
         worldSize = size;
-        screenLoc = Screen.WorldPointToScreen(new(loc.x - size.x/2f, loc.y + size.y/2f));
-        screenSize = Screen.WorldSizeToScreen(size);
 
-        sdlWin = SDL_CreateWindow(title, screenLoc.x, screenLoc.y, screenSize.x, screenSize.y, movable ? SDL_WindowFlags.SDL_WINDOW_SHOWN : SDL_WindowFlags.SDL_WINDOW_BORDERLESS);
+        SDL_WindowFlags flags = movable ? 0 : SDL_WindowFlags.SDL_WINDOW_BORDERLESS;
+        sdlWin = SDL_CreateWindow(title, screenLoc.x, screenLoc.y, screenSize.x, screenSize.y, flags);
         if(sdlWin == nint.Zero)
-            throw new(SDL_GetError());
+            ThrowSdlError("Failed to create window [@ Window.ctor]");
 
         sdlRend = SDL_CreateRenderer(sdlWin, -1, SDL_RendererFlags.SDL_RENDERER_ACCELERATED);
         if(sdlRend == nint.Zero)
-            throw new(SDL_GetError());
+            ThrowSdlError("Failed to create renderer [@ Window.ctor]");
 
         id = SDL_GetWindowID(sdlWin);
 
-        SDL_SetWindowResizable(sdlWin, resizable.ToSdlBool());
-
-        colors.background.GetRgb(out byte r, out byte g, out byte b);
-        SDL_SetRenderDrawColor(sdlRend, r, g, b, 0xff).ThrowSdlErr();
-        SDL_RenderClear(sdlRend).ThrowSdlErr();
+        colors.background.GetRgb(out u8 r, out u8 g, out u8 b);
+        SDL_SetRenderDrawColor(sdlRend, r, g, b, 0xff).ThrowSdlError();
+        SDL_RenderClear(sdlRend).ThrowSdlError();
         SDL_RenderPresent(sdlRend);
     }
 
-    public Window(string title, V2f loc, V2f size, bool movable, bool resizable, u32 baseColor)
-        : this(title, loc, size, movable, resizable, new ColorPalette(baseColor))
+    internal Window(WindowData data)
+        : this(data.title, data.loc, data.size, data.movable, data.resizable, new(data.color))
     {
     }
-
-    public Window(in WindowData data)
-        : this(data.title, data.loc, data.size, data.movable, data.resizable, data.color)
-    {
-    }
-
-
-    ~Window() => (this as IDisposable).Dispose();
 
 
     public readonly nint sdlWin, sdlRend;
     public readonly u32 id;
     public readonly bool movable, resizable;
     public readonly ColorPalette colors;
-    public V2f worldLoc, worldSize;
-    public V2i screenLoc, screenSize;
-
-    private bool disposed;
 
 
-    public void Redraw()
+    private V2f _worldLoc;
+    /// <summary>Also sets screenLoc to the appropriate values</summary>
+    public V2f worldLoc
     {
-        colors.background.GetRgb(out byte r, out byte g, out byte b);
-        SDL_SetRenderDrawColor(sdlRend, r, g, b, 0xff).ThrowSdlErr();
-        SDL_RenderClear(sdlRend).ThrowSdlErr();
-
-        foreach(GameObject o in GameState.objects!)
-            o.Draw(this);
-
-        GameState.player!.Draw(this);
-
-        SDL_RenderPresent(sdlRend);
+        get => _worldLoc;
+        set
+        {
+            _worldLoc = value;
+            _screenLoc = Screen.WorldPointToScreen(value);
+        }
     }
 
-    public void SetWorldLoc(V2f wPt)
+    private V2f _worldSize;
+    /// <summary>Also sets screenSize to the appropriate values</summary>
+    public V2f worldSize
     {
-        worldLoc = wPt;
-        screenLoc = Screen.WorldPointToScreen(wPt);
-        SDL_SetWindowPosition(sdlWin, screenLoc.x, screenLoc.y);
+        get => _worldSize;
+        set
+        {
+            _worldSize = value;
+            _screenSize = Screen.WorldSizeToScreen(value);
+        }
     }
 
-    public void SetWorldSize(V2f wSz)
+    private V2i _screenLoc;
+    /// <summary>Also sets worldLoc to the appropriate values</summary>
+    public V2i screenLoc
     {
-        worldSize = wSz;
-        screenSize = Screen.WorldSizeToScreen(wSz);
-        SDL_SetWindowSize(sdlWin, screenSize.x, screenSize.y);
+        get => _screenLoc;
+        set
+        {
+            _screenLoc = value;
+            _worldLoc = Screen.WorldPointFromScreen(value);
+        }
     }
 
-    public void SetScreenLoc(V2i sPt)
+    private V2i _screenSize;
+    /// <summary>Also sets worldSize with the appropriate values</summary>
+    public V2i screenSize
     {
-        screenLoc = sPt;
-        worldLoc = Screen.WorldPointFromScreen(sPt);
+        get => _screenSize;
+        set
+        {
+            _screenSize = value;
+            _worldSize = Screen.WorldSizeFromScreen(value);
+        }
     }
 
-    public void SetScreenSize(V2i sSz)
+
+    public void UpdateWindowPos()
+        => SDL_SetWindowPosition(sdlWin, screenLoc.x, screenLoc.y);
+
+    public void UpdateWindowSize()
+        => SDL_SetWindowSize(sdlWin, screenSize.x, screenSize.y);
+
+
+    internal void Destroy()
     {
-        screenSize = sSz;
-        worldSize = Screen.WorldSizeFromScreen(sSz);
-    }
-
-    public void SetTitle(string title)
-        => SDL_SetWindowTitle(sdlWin, title);
-
-
-    void IDisposable.Dispose()
-    {
-        if(disposed)
-            return;
-
-        disposed = true;
-        GC.SuppressFinalize(this);
-
         SDL_DestroyRenderer(sdlRend);
         SDL_DestroyWindow(sdlWin);
     }
