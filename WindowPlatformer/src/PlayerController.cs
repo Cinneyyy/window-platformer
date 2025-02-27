@@ -28,7 +28,7 @@ public static class PlayerController
         vel = V2f.zero;
         timeSinceGrounded = 0f;
         timeSinceJumpAttempt = 0f;
-        playerObj = LevelManager.objs[0];
+        playerObj = GameObjectManager.objs.Find(o => o.type == ObjectType.Player);
     }
 
     public static void Tick(f32 dt)
@@ -88,36 +88,38 @@ public static class PlayerController
 
         playerObj.loc = newPos;
 
-        //if(col is not null)
-        //    switch(col.type)
-        //    {
-        //        case ObjectType.Danger:
-        //        {
-        //            GameState.KillPlayer();
-        //            break;
-        //        }
-        //        case ObjectType.Goal:
-        //        {
-        //            GameState.WinLevel();
-        //            break;
-        //        }
-        //        case ObjectType.Breakable:
-        //        {
-        //            if(stomping)
-        //                col.enabled = false;
-        //            else
-        //                GameState.KillPlayer();
+        if(col is not null)
+            switch(col.type)
+            {
+                case ObjectType.Danger: LoseLevel(); break;
+                case ObjectType.Goal: WinLevel(); break;
+                case ObjectType.Breakable:
+                {
+                    if(stomping)
+                        GameObjectManager.Destroy(col);
+                    else
+                        LoseLevel();
 
-        //            break;
-        //        }
-        //        default:
-        //            break;
-        //    }
+                    break;
+                }
+                default:
+                    break;
+            }
 
         if(!WindowEngine.windows.Any(w => RectsIntersect(playerObj.output.GetLoc(), playerObj.output.GetSize(), w.screenLoc, w.screenSize)))
-            Log("Player died :(");
+            LoseLevel();
     }
 
+
+    private static void LoseLevel()
+    {
+        LevelManager.ReloadLevel();
+    }
+
+    private static void WinLevel()
+    {
+        LevelManager.ReloadLevel();
+    }
 
     private static void HandleCollision(ref V2f newPos, ref V2f vel, out bool grounded, out GameObject col)
     {

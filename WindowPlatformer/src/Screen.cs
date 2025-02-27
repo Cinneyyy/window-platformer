@@ -23,14 +23,14 @@ public static class Screen
 
     public static V2f WorldPointFromScreen(V2i pt)
         => new(
-            (pt.x - whDelta) / size.y * 2f - 1f,
-            -(pt.y / size.y * 2f - 1f)
+            (f32)(pt.x - whDelta) / size.y * 2f - 1f,
+            -((f32)pt.y / size.y * 2f - 1f)
         );
 
     public static V2f WorldSizeFromScreen(V2i sz)
         => new(
-            sz.x / size.y * 2f,
-            sz.y / size.y * 2f
+            (f32)sz.x / size.y * 2f,
+            (f32)sz.y / size.y * 2f
         );
 
 

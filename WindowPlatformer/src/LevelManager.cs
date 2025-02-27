@@ -20,8 +20,8 @@ public static class LevelManager
 
         isBusy = true;
 
-        WindowEngine.CreateWindows(data.windows);
         GameObjectManager.CreateMany(data.objects);
+        WindowEngine.CreateWindows(data.windows);
 
         PlayerController.OnLevelLoaded();
 

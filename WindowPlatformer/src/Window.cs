@@ -4,11 +4,12 @@ namespace src;
 
 public class Window
 {
-    internal Window(string title, V2f loc, V2f size, bool movable, bool resizable, ColorPalette colors)
+    internal Window(string title, V2f loc, V2f size, bool movable, bool resizable, ColorPalette colors, V2f exitPos)
     {
         this.colors = colors;
         this.movable = movable;
         this.resizable = resizable;
+        this.exitPos = exitPos;
 
         worldSize = size;
         worldLoc = loc;
@@ -34,7 +35,7 @@ public class Window
     }
 
     internal Window(WindowData data)
-        : this(data.title, data.loc, data.size, data.movable, data.resizable, new(data.color))
+        : this(data.title, data.loc, data.size, data.movable, data.resizable, new(data.color), data.entryDir)
     {
     }
 
@@ -43,6 +44,7 @@ public class Window
     public readonly u32 id;
     public readonly bool movable, resizable;
     public readonly ColorPalette colors;
+    public readonly V2f exitPos;
 
 
     private V2f _worldLoc;
@@ -78,6 +80,7 @@ public class Window
         {
             _screenLoc = value;
             _worldLoc = Screen.WorldPointFromScreen(value) + new V2f(worldSize.x/2f, -worldSize.y/2f);
+            (screenLoc, worldLoc, Screen.WorldPointFromScreen(value)).Log();
         }
     }
 

@@ -15,6 +15,9 @@ public static class LevelReader
     }
 
 
+    public const f32 WINDOW_ENTRY_MUL = 1f;
+
+
     public static LevelData ReadFile(string path)
     {
         string file = File.ReadAllText(path);
@@ -50,13 +53,13 @@ public static class LevelReader
 
             if(ctx == Context.Window)
             {
-                (string title, V2f size, V2f loc, bool movable, bool resizable, u32 color) winData = ("", V2f.zero, V2f.zero, false, false, 0xffffff);
+                (string title, V2f size, V2f loc, bool movable, bool resizable, u32 color, V2f entryDir) winData = ("", V2f.zero, V2f.zero, false, false, 0xffffff, V2f.zero);
 
                 foreach(string token in ln.Split(", ", StringSplitOptions.RemoveEmptyEntries).Select(t => t.Trim()))
                     switch(token)
                     {
                         case var _ when token.StartsWith('"') && token.EndsWith('"'):
-                            winData.title = token[1..^2];
+                            winData.title = token[1..^1];
                             break;
                         case var _ when token.StartsWith('#') && token.Length == 7:
                             winData.color = Convert.ToUInt32(token[1..], 16);
@@ -79,9 +82,32 @@ public static class LevelReader
                             winData.loc = new(f32.Parse(xy[0]), f32.Parse(xy[1]));
                             break;
                         }
+                        case var _ when token.StartsWith('^'):
+                        {
+                            string t = token[1..];
+
+                            if(t.Contains('^'))
+                            {
+                                string[] xy = t.Split('^');
+                                winData.entryDir = new(f32.Parse(xy[0]), f32.Parse(xy[1]));
+                                break;
+                            }
+
+                            winData.entryDir = WINDOW_ENTRY_MUL * (t switch
+                            {
+                                "u" or "up" => V2f.up,
+                                "d" or "down" => V2f.down,
+                                "l" or "left" => V2f.left,
+                                "r" or "right" => V2f.right,
+                                "n" or "none" or "0" => V2f.zero,
+                                _ => throw new($"Invalid entry direction: {t}")
+                            });
+
+                            break;
+                        }
                     }
 
-                windows.Add(new(winData.title, winData.loc, winData.size, winData.movable, winData.resizable, winData.color));
+                windows.Add(new(winData.title, winData.loc, winData.size, winData.movable, winData.resizable, winData.color, winData.entryDir));
             }
             else if(ctx == Context.Object)
             {
