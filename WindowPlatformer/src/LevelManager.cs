@@ -4,6 +4,9 @@ namespace src;
 
 public static class LevelManager
 {
+    public const bool LOADING_ANIMATIONS = true;
+
+
     public static bool isBusy { get; private set; }
     public static LevelData? loadedLevel { get; private set; } = null;
     public static LevelData? lastLoadedLevel { get; private set; } = null;
@@ -21,7 +24,7 @@ public static class LevelManager
         isBusy = true;
 
         GameObjectManager.CreateMany(data.objects);
-        WindowEngine.CreateWindows(data.windows);
+        WindowEngine.CreateWindows(data.windows, LOADING_ANIMATIONS);
 
         PlayerController.OnLevelLoaded();
 
@@ -36,7 +39,7 @@ public static class LevelManager
 
         isBusy = true;
 
-        WindowEngine.DestroyAllWindows();
+        WindowEngine.DestroyAllWindows(LOADING_ANIMATIONS);
         GameObjectManager.DestroyAll();
 
         lastLoadedLevel = loadedLevel;

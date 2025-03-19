@@ -52,6 +52,7 @@ public static class WindowEngine
             const u32 ANIM_TIME = 450;
             u32 animStart = SDL_GetTicks();
             V2f[] startPos = wins.Select(w => w.worldLoc).ToArray();
+
             while(SDL_GetTicks() - animStart is u32 timePassed && timePassed < ANIM_TIME)
             {
                 f32 t = Easing.Out.Cube((f32)timePassed / ANIM_TIME);
@@ -100,8 +101,7 @@ public static class WindowEngine
             const u32 ANIM_TIME = 450;
             u32 animStart = SDL_GetTicks();
             V2f[] startPos = windows.Select(w => w.worldLoc).ToArray();
-            foreach(var s in startPos)
-                s.Log();
+
             while(SDL_GetTicks() - animStart is u32 timePassed && timePassed < ANIM_TIME)
             {
                 f32 t = Easing.In.Cube((f32)timePassed / ANIM_TIME);
@@ -117,11 +117,8 @@ public static class WindowEngine
             }
         }
 
-        ThreadManager.RunOnEventThreadAndWait(() =>
-        {
-            foreach(Window win in windows)
-                win.Destroy();
-        }, true);
+        foreach(Window win in windows)
+            win.Destroy();
 
         windows.Clear();
 

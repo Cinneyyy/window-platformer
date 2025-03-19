@@ -80,7 +80,6 @@ public class Window
         {
             _screenLoc = value;
             _worldLoc = Screen.WorldPointFromScreen(value) + new V2f(worldSize.x/2f, -worldSize.y/2f);
-            (screenLoc, worldLoc, Screen.WorldPointFromScreen(value)).Log();
         }
     }
 

@@ -41,6 +41,8 @@ public static class ThreadManager
         while(!eventThreadInitializationComplete)
             SDL_Delay(1);
 
+        SDL_AddEventWatch(EventWatch, nint.Zero);
+
         initiated = true;
     }
 
