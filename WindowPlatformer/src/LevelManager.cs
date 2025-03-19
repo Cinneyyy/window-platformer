@@ -24,12 +24,14 @@ public static class LevelManager
         isBusy = true;
 
         GameObjectManager.CreateMany(data.objects);
+        ThreadManager.CycleWindowThread();
         WindowEngine.CreateWindows(data.windows, LOADING_ANIMATIONS);
 
         PlayerController.OnLevelLoaded();
 
         loadedLevel = data;
         isBusy = false;
+        Log("Grr");
     }
 
     public static void UnloadLevel()

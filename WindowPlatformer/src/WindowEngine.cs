@@ -1,12 +1,11 @@
 using System.Collections.Generic;
 using System.Linq;
-using WindowPlatformer;
 
 namespace src;
 
 public static class WindowEngine
 {
-    private const i32 WINDOW_ANIM_DT = 5;
+    private const i32 WINDOW_ANIM_DT = 1;
 
     public static readonly List<Window> windows = [];
 
@@ -14,25 +13,12 @@ public static class WindowEngine
     public static bool isBusy { get; private set; } = false;
 
 
-    public static Window CreateWindow(WindowData data)
-    {
-        isBusy = true;
-
-        Window win = null;
-        ThreadManager.RunOnEventThreadAndWait(() => win = new(data), true);
-
-        windows.Add(win);
-
-        isBusy = false;
-        return win;
-    }
-
     public static Window[] CreateWindows(WindowData[] data, bool entryAnim = true)
     {
         isBusy = true;
 
         Window[] wins = new Window[data.Length];
-        ThreadManager.RunOnEventThreadAndWait(() =>
+        ThreadManager.RunOnWindowThread(() =>
         {
             for(i32 i = 0; i < data.Length; i++)
             {
@@ -86,8 +72,7 @@ public static class WindowEngine
         isBusy = true;
 
         windows.Remove(win);
-
-        ThreadManager.RunOnEventThreadAndWait(win.Destroy, true);
+        win.Destroy();
 
         isBusy = false;
     }

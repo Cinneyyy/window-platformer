@@ -1,73 +1,65 @@
 using System;
 using System.Collections.Concurrent;
-using System.Runtime.CompilerServices;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace src;
 
 public static class ThreadManager
 {
+    private const i32 WINDOW_THREAD_COUNT = 2;
+
     private static bool initiated;
-    private static volatile bool isRunning;
-    private static readonly Thread eventThread = new(EventThread);
-    private static readonly ConcurrentQueue<(Action action, Ref<bool> completed)> eventThreadRequests = [];
-    private static readonly ConcurrentQueue<(Action action, Ref<bool> completed)> urgentEventThreadRequests = [];
-    private static bool eventThreadReady;
-    private static bool eventThreadInitializationComplete;
+    private static WindowThread[] windowThreads;
+    private static i32 activeWindowThreadIndex;
+    private static readonly ConcurrentQueue<(Action action, Ref<bool> completed)> mainThreadRequests = [];
 
 
-    public static bool isOnEventThread => Thread.CurrentThread == eventThread;
+    public static bool isRunning { get; private set; }
+    public static bool runWindowThreads { get; private set; }
+    public static WindowThread activeWindowThread => windowThreads[activeWindowThreadIndex];
 
 
     public static void Init()
     {
-        if(initiated)
+        if(initiated || isRunning)
         {
-            LOG_INFO.Error($"Cannot call {nameof(Init)} multiple times.");
+            LogError("Cannot call Init multiple times or while already running");
             return;
         }
 
-        if(isRunning)
-        {
-            LOG_INFO.Error($"Cannot call {nameof(Init)} after {nameof(Run)}.");
-            return;
-        }
+        SDL_Init(SDL_INIT_VIDEO).ThrowSdlError();
 
+        Screen.Init();
         Input.Init();
 
-        eventThread.Start();
-
-        while(!eventThreadInitializationComplete)
-            SDL_Delay(1);
-
-        SDL_AddEventWatch(EventWatch, nint.Zero);
+        runWindowThreads = true;
+        windowThreads = new WindowThread[WINDOW_THREAD_COUNT];
+        for(i32 i = 0; i < WINDOW_THREAD_COUNT; i++)
+        {
+            windowThreads[i] = new();
+            windowThreads[i].Start();
+        }
 
         initiated = true;
     }
 
     public static void Run()
     {
-        if(!initiated)
+        if(!initiated || isRunning)
         {
-            LOG_INFO.Error($"Cannot call {nameof(Run)} before {nameof(Init)} was called.");
-            return;
-        }
-
-        if(isRunning)
-        {
-            LOG_INFO.Error($"Cannot call {nameof(Run)} multiple times.");
+            LogError("Cannot call Run before Init or while already running");
             return;
         }
 
         isRunning = true;
 
+        activeWindowThread.Resume();
+
         u32 lastFrame = SDL_GetTicks();
-        f32 deltaTime = 0f;
+        f32 deltaTime;
 
         while(isRunning)
         {
-            if(WindowEngine.isBusy || !eventThreadReady)
+            if(WindowEngine.isBusy)
             {
                 SDL_Delay(1);
                 continue;
@@ -81,6 +73,12 @@ public static class ThreadManager
 
             PlayerController.Tick(deltaTime);
 
+            while(mainThreadRequests.TryDequeue(out (Action action, Ref<bool> completed) request))
+            {
+                request.action?.Invoke();
+                request.completed?.Set(true);
+            }
+
             if(Input.KeyDown(Key.R))
                 LevelManager.ReloadLevel();
 
@@ -91,106 +89,33 @@ public static class ThreadManager
         }
     }
 
-    public static void RunOnEventThread(Action action, bool ignoreBusyState = false)
+    public static void Quit()
     {
-        if(isOnEventThread)
-            action();
-        else
-            (ignoreBusyState ? urgentEventThreadRequests : eventThreadRequests).Enqueue((action, null));
+        isRunning = false;
+        runWindowThreads = false;
     }
 
-    public static void RunOnEventThreadAndWait(Action action, bool ignoreBusyState = false)
+    public static void RunOnWindowThread(Action action, bool waitUntilCompleted)
     {
-        if(isOnEventThread)
-            action();
-        else
-        {
-            Ref<bool> completed = new(false);
-            (ignoreBusyState ? urgentEventThreadRequests : eventThreadRequests).Enqueue((action, completed));
+        Ref<bool> completed = activeWindowThread.EnqueueTask(action);
 
-            while(!completed.value)
-                SDL_Delay(1);
-        }
+        if(waitUntilCompleted)
+            SDL_WaitUntil(completed.Get);
     }
 
-
-    private static void EventThread()
+    public static void RunOnMainThread(Action action, bool waitUntilCompleted)
     {
-        SDL_Init(SDL_INIT_VIDEO).ThrowSdlError();
-        SDL_AddEventWatch(EventWatch, nint.Zero);
+        Ref<bool> completed = new(false);
+        mainThreadRequests.Enqueue((action, completed));
 
-        Screen.Init();
-
-        eventThreadInitializationComplete = true;
-
-        // Wait until Run is called, as this already executes when Init is called
-        while(!isRunning)
-            SDL_Delay(1);
-
-        eventThreadReady = true;
-
-        while(isRunning)
-        {
-            while(SDL_PollEvent(out _) == 1)
-                continue;
-
-            while(urgentEventThreadRequests.TryDequeue(out (Action action, Ref<bool> completed) req))
-            {
-                req.action?.Invoke();
-                req.completed?.Set(true);
-            }
-
-            while(!WindowEngine.isBusy && eventThreadRequests.TryDequeue(out (Action action, Ref<bool> completed) req))
-            {
-                req.action?.Invoke();
-                req.completed?.Set(true);
-            }
-
-            SDL_Delay(1);
-        }
-
-        SDL_Quit();
+        if(waitUntilCompleted)
+            SDL_WaitUntil(completed.Get);
     }
 
-    private static unsafe i32 EventWatch(nint data, nint evtPtr)
+    public static void CycleWindowThread()
     {
-        SDL_Event* evt = (SDL_Event*)evtPtr;
-
-        switch(evt->type)
-        {
-            case SDL_EventType.SDL_QUIT:
-            {
-                isRunning = false;
-                break;
-            }
-            case SDL_EventType.SDL_WINDOWEVENT:
-            {
-                if(!LevelManager.ready)
-                    break;
-
-                Window win = WindowEngine.GetWindowFromId(evt->window.windowID);
-
-                if(win is null)
-                    break;
-
-                switch(evt->window.windowEvent)
-                {
-                    case SDL_WindowEventID.SDL_WINDOWEVENT_MOVED:
-                        win.screenLoc = new(evt->window.data1, evt->window.data2);
-                        break;
-                    case SDL_WindowEventID.SDL_WINDOWEVENT_RESIZED:
-                        win.screenSize = new(evt->window.data1, evt->window.data2);
-                        break;
-                    default:
-                        break;
-                }
-
-                break;
-            }
-            default:
-                return 1;
-        }
-
-        return 0;
+        activeWindowThread.Pause();
+        activeWindowThreadIndex = (activeWindowThreadIndex + 1) % WINDOW_THREAD_COUNT;
+        activeWindowThread.Resume();
     }
 }

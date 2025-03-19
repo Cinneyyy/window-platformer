@@ -10,3 +10,4 @@ global using f32 = float;
 global using f64 = double;
 global using static SDL2.SDL;
 global using static src.Debugging.Logger;
+global using static src.Dev.GlobalUtility;

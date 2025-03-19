@@ -1,7 +1,5 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace src.Dev;
 
@@ -26,4 +24,10 @@ public static class Ext
     public static V2i GetSize(this SDL_Rect rect) => new(rect.w, rect.h);
 
     public static SDL_bool ToSdlBool(this bool b) => b ? SDL_bool.SDL_TRUE : SDL_bool.SDL_FALSE;
+
+    public static void Populate<T>(this T[] arr, Func<i32, T> initialize)
+    {
+        for(i32 i = 0; i < arr.Length; i++)
+            arr[i] = initialize(i);
+    }
 }
