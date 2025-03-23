@@ -53,7 +53,7 @@ public static class LevelReader
 
             if(ctx == Context.Window)
             {
-                (string title, V2f size, V2f loc, bool movable, bool resizable, u32 color, V2f entryDir, V2f entrySize) winData = ("", V2f.zero, V2f.zero, false, false, 0xffffff, V2f.zero, new(1f));
+                (string title, V2f size, V2f loc, bool movable, bool resizable, u32 color, V2f entryDir, V2f entrySize, bool entryRedraw) winData = ("", V2f.zero, V2f.zero, false, false, 0xffffff, V2f.zero, new(1f), true);
 
                 foreach(string token in ln
                     .Split(", ", StringSplitOptions.RemoveEmptyEntries) // Split by comma
@@ -74,6 +74,9 @@ public static class LevelReader
                             break;
                         case "r:true" or "r:false":
                             winData.resizable = token == "r:true";
+                            break;
+                        case "er:true" or "er:false":
+                            winData.entryRedraw = token == "er:true";
                             break;
                         case var _ when token.Contains('x'):
                         {
@@ -119,7 +122,7 @@ public static class LevelReader
                         default: break;
                     }
 
-                windows.Add(new(winData.title, winData.loc, winData.size, winData.movable, winData.resizable, winData.color, winData.entryDir, winData.entrySize));
+                windows.Add(new(winData.title, winData.loc, winData.size, winData.movable, winData.resizable, winData.color, winData.loc - winData.entryDir, winData.size * winData.entrySize, winData.entryRedraw));
             }
             else if(ctx == Context.Object)
             {

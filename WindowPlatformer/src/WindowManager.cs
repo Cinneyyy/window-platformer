@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using src.LevelSystem;
+using src.Utility;
 
 namespace src;
 
@@ -20,68 +21,50 @@ public static class WindowManager
     {
         isBusy = true;
 
-        Window[] wins = new Window[data.Length];
-        ThreadManager.RunOnWindowThread(() =>
-        {
-            for(i32 i = 0; i < data.Length; i++)
-            {
-                if(entryAnim)
-                {
-                    WindowData d = data[i];
-                    V2f loc = d.loc - d.entryDir;
-                    V2f size = d.size * d.entrySize;
-                    wins[i] = new(d.title, loc, size, d.movable, d.resizable, new(d.color), loc, size);
-                    Renderer.DrawObjects(wins[i], Screen.WorldPointToScreen(data[i].loc + new V2f(-size.x/2f, size.y/2f)));
-                }
-                else
-                    wins[i] = new(data[i]);
-            }
-        }, true);
+        Window[] wins = null;
+        ThreadManager.RunOnWindowThread(() => wins = data.Select(d => new Window(d)).ToArray(), true);
+
+        foreach(Window win in wins)
+            Renderer.DrawWindow(win);
 
         if(entryAnim)
         {
-            u32 animStart = SDL_GetTicks();
-            V2f[] startPos = wins.Select(w => w.worldLoc).ToArray();
-            V2f[] startSize = wins.Select(w => w.worldSize).ToArray();
+            u32 startTime = SDL_GetTicks();
 
-            while(SDL_GetTicks() - animStart is u32 timePassed && timePassed < ENTRY_ANIM_TIME)
+            while(SDL_GetTicks() - startTime < ENTRY_ANIM_TIME)
             {
-                f32 t = Easing.Out.Cube((f32)timePassed / ENTRY_ANIM_TIME);
+                f32 t = Easing.Out.Cube((f32)(SDL_GetTicks() - startTime) / ENTRY_ANIM_TIME);
 
-                for(i32 i = 0; i < data.Length; i++)
+                for(i32 i = 0; i < wins.Length; i++)
                 {
-                    if(data[i].entrySize == V2f.one && data[i].entryDir == V2f.zero)
-                        continue;
+                    Window win = wins[i];
+                    WindowData dat = data[i];
 
-                    if(data[i].entrySize != V2f.one)
-                    {
-                        wins[i].worldSize = V2f.Lerp(startSize[i], data[i].size, t);
-                        wins[i].worldLoc = wins[i].worldLoc;
-                        wins[i].UpdateWindowSize();
-                    }
+                    win.worldSize = V2f.Lerp(dat.entrySize, dat.size, t);
+                    win.worldLoc = V2f.Lerp(dat.entryLoc, dat.loc, t);
 
-                    if(data[i].entryDir != V2f.zero)
-                        wins[i].worldLoc = V2f.Lerp(startPos[i], data[i].loc, t);
+                    win.UpdateWindowPos();
+                    ThreadManager.RunOnWindowThread(win.UpdateWindowSize, true);
 
-                    wins[i].UpdateWindowPos();
-                    Renderer.DrawWindow(wins[i], Screen.WorldPointToScreen(data[i].loc + new V2f(-wins[i].worldSize.x/2f, wins[i].worldSize.y/2f)));
+                    if(win.entryRedraw)
+                        Renderer.DrawWindow(win);
                 }
 
                 SDL_Delay(WINDOW_ANIM_DT);
             }
-        }
 
-        for(i32 i = 0; i < data.Length; i++)
-        {
-            wins[i].worldSize = data[i].size;
-            wins[i].worldLoc = data[i].loc;
-
-            wins[i].UpdateWindowPos();
-
-            if(data[i].entrySize != V2f.one)
+            for(i32 i = 0; i < wins.Length; i++)
             {
-                wins[i].UpdateWindowSize();
-                wins[i].RecreateRenderer();
+                Window win = wins[i];
+                WindowData dat = data[i];
+
+                win.worldSize = dat.size;
+                win.worldLoc = dat.loc;
+
+                win.UpdateWindowPos();
+                ThreadManager.RunOnWindowThread(win.UpdateWindowSize, true);
+
+                Renderer.DrawWindow(win);
             }
         }
 
@@ -117,8 +100,8 @@ public static class WindowManager
 
                 for(i32 i = 0; i < startPos.Length; i++)
                 {
-                    windows[i].worldSize = V2f.Lerp(startSize[i], windows[i].exitSize, t);
-                    windows[i].worldLoc = V2f.Lerp(startPos[i], windows[i].exitLoc, t);
+                    windows[i].worldSize = V2f.Lerp(startSize[i], windows[i].entrySize, t);
+                    windows[i].worldLoc = V2f.Lerp(startPos[i], windows[i].entryLoc, t);
 
                     windows[i].UpdateWindowSize();
                     windows[i].UpdateWindowPos();

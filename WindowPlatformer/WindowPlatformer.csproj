@@ -17,6 +17,12 @@
     <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('OSX'))">
         <DefineConstants>OS_MAC</DefineConstants>
     </PropertyGroup>
+    <ItemGroup>
+      <Compile Remove="temp.cs" />
+    </ItemGroup>
+    <ItemGroup>
+      <None Include="temp.cs" />
+    </ItemGroup>
 
     <ItemGroup>
         <PackageReference Include="ppy.SDL2-CS" Version="1.0.82" />

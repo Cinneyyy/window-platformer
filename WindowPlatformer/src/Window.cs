@@ -1,33 +1,31 @@
 using src.Debugging;
 using src.LevelSystem;
-using src.Utility;
 
 namespace src;
 
 public class Window
 {
-    internal Window(string title, V2f loc, V2f size, bool movable, bool resizable, ColorPalette colors, V2f exitLoc, V2f exitSize)
+    internal Window(string title, V2f loc, V2f size, bool movable, bool resizable, ColorPalette colors, V2f entryLoc, V2f entrySize, bool entryRedraw)
     {
         this.colors = colors;
         this.movable = movable;
         this.resizable = resizable;
-        this.exitLoc = exitLoc;
-        this.exitSize = exitSize;
+        this.entryLoc = entryLoc;
+        this.entrySize = entrySize;
+        this.entryRedraw = entryRedraw;
 
         worldSize = size;
         worldLoc = loc;
 
-        SDL_WindowFlags flags = movable ? 0 : SDL_WindowFlags.SDL_WINDOW_BORDERLESS;
+        SDL_WindowFlags flags =
+            (movable ? 0 : SDL_WindowFlags.SDL_WINDOW_BORDERLESS) |
+            (resizable ? 0 : SDL_WindowFlags.SDL_WINDOW_RESIZABLE);
+
         sdlWin = SDL_CreateWindow(title, screenLoc.x, screenLoc.y, screenSize.x, screenSize.y, flags);
         if(sdlWin == nint.Zero)
             ThrowSdlError("Failed to create window [@ Window.ctor]");
 
-        UpdateWindowPos();
-        UpdateWindowSize();
-
-        SDL_SetWindowResizable(sdlWin, resizable.ToSdlBool());
-
-        sdlRend = SDL_CreateRenderer(sdlWin, -1, SDL_RendererFlags.SDL_RENDERER_ACCELERATED);
+        sdlRend = SDL_CreateRenderer(sdlWin, -1, SDL_RendererFlags.SDL_RENDERER_SOFTWARE);
         if(sdlRend == nint.Zero)
             ThrowSdlError("Failed to create renderer [@ Window.ctor]");
 
@@ -40,18 +38,17 @@ public class Window
     }
 
     internal Window(WindowData data)
-        : this(data.title, data.loc, data.size, data.movable, data.resizable, new(data.color), data.loc, data.size)
+        : this(data.title, data.loc, data.size, data.movable, data.resizable, new(data.color), data.loc - data.entryLoc, data.size * data.entrySize, data.entryRedraw)
     {}
 
 
-    public readonly nint sdlWin;
+    public readonly nint sdlWin, sdlRend;
     public readonly u32 id;
     public readonly bool movable, resizable;
     public readonly ColorPalette colors;
-    public readonly V2f exitLoc, exitSize;
+    public readonly V2f entryLoc, entrySize;
+    public readonly bool entryRedraw;
 
-
-    public nint sdlRend { get; private set; }
 
     private V2f _worldLoc;
     /// <summary>Also sets screenLoc to the appropriate values</summary>
@@ -107,15 +104,6 @@ public class Window
 
     public void UpdateWindowSize()
         => SDL_SetWindowSize(sdlWin, screenSize.x, screenSize.y);
-
-    public void RecreateRenderer()
-    {
-        SDL_DestroyRenderer(sdlRend);
-
-        sdlRend = SDL_CreateRenderer(sdlWin, -1, SDL_RendererFlags.SDL_RENDERER_ACCELERATED);
-        if(sdlRend == nint.Zero)
-            ThrowSdlError("Failed to create renderer [@ Window.RecreateRenderer]");
-    }
 
 
     internal void Destroy()
