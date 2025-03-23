@@ -1,12 +1,10 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
-using src.Dev;
+using src.Utility;
 
 namespace src.Debugging;
 
-#pragma warning disable IDE0051 // Remove unused private members
-#pragma warning disable IDE0052 // Remove unread private members
 public partial class FancyConsole
 {
     private static readonly nint hWnd = GetConsoleWindow();
@@ -22,6 +20,10 @@ public partial class FancyConsole
 
     public static void WriteLine(string msg)
         => Console.WriteLine(FormatColor(msg));
+
+    public static void SetVisible(bool visible)
+        => ShowWindow(hWnd, visible ? 9 : 0);
+
 
     [GeneratedRegex(@"%F\(#([0-9A-F]{6}|[0-9a-f]{6})\)%")]
     private static partial Regex FgRegex();

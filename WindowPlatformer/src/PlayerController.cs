@@ -1,5 +1,7 @@
 using System.Linq;
-using src.Dev;
+using src.Utility;
+using src.LevelSystem;
+using src.Gui;
 
 namespace src;
 
@@ -20,7 +22,7 @@ public static class PlayerController
     private static f32 timeSinceJumpAttempt;
 
 
-    public static GameObject playerObj { get; set; }
+    public static GameObject[] playerObjs { get; set; } = [];
 
 
     public static void OnLevelLoaded()
@@ -28,10 +30,17 @@ public static class PlayerController
         vel = V2f.zero;
         timeSinceGrounded = 0f;
         timeSinceJumpAttempt = 0f;
-        playerObj = GameObjectManager.objs.Find(o => o.type == ObjectType.Player);
+        playerObjs = [..GameObjectManager.objs.FindAll(o => o.type == ObjectType.Player)];
     }
 
     public static void Tick(f32 dt)
+    {
+        foreach(GameObject playerObj in playerObjs)
+            Tick(dt, playerObj);
+    }
+
+
+    private static void Tick(f32 dt, GameObject playerObj)
     {
         if(!LevelManager.ready || playerObj is null)
             return;
@@ -78,7 +87,7 @@ public static class PlayerController
 
         V2f newPos = playerObj.loc + vel * dt;
 
-        HandleCollision(ref newPos, ref vel, out bool grounded, out GameObject col);
+        HandleCollision(playerObj, ref newPos, ref vel, out bool grounded, out GameObject col);
 
         if(grounded)
             timeSinceGrounded = COYOTE_TIME;
@@ -106,22 +115,17 @@ public static class PlayerController
                     break;
             }
 
-        if(!WindowEngine.windows.Any(w => RectsIntersect(playerObj.output.GetLoc(), playerObj.output.GetSize(), w.screenLoc, w.screenSize)))
+        if(playerObj is not null && !WindowManager.windows.Any(w => RectsIntersect(playerObj.output.GetLoc(), playerObj.output.GetSize(), w.screenLoc, w.screenSize)))
             LoseLevel();
     }
 
-
     private static void LoseLevel()
-    {
-        LevelManager.ReloadLevel();
-    }
+        => MainMenu.Load();
 
     private static void WinLevel()
-    {
-        LevelManager.ReloadLevel();
-    }
+        => LevelManager.AdvanceLevel();
 
-    private static void HandleCollision(ref V2f newPos, ref V2f vel, out bool grounded, out GameObject col)
+    private static void HandleCollision(GameObject playerObj, ref V2f newPos, ref V2f vel, out bool grounded, out GameObject col)
     {
         grounded = false;
         col = null;

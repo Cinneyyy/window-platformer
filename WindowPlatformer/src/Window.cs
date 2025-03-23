@@ -1,15 +1,18 @@
 using src.Debugging;
+using src.LevelSystem;
+using src.Utility;
 
 namespace src;
 
 public class Window
 {
-    internal Window(string title, V2f loc, V2f size, bool movable, bool resizable, ColorPalette colors, V2f exitPos)
+    internal Window(string title, V2f loc, V2f size, bool movable, bool resizable, ColorPalette colors, V2f exitLoc, V2f exitSize)
     {
         this.colors = colors;
         this.movable = movable;
         this.resizable = resizable;
-        this.exitPos = exitPos;
+        this.exitLoc = exitLoc;
+        this.exitSize = exitSize;
 
         worldSize = size;
         worldLoc = loc;
@@ -21,6 +24,8 @@ public class Window
 
         UpdateWindowPos();
         UpdateWindowSize();
+
+        SDL_SetWindowResizable(sdlWin, resizable.ToSdlBool());
 
         sdlRend = SDL_CreateRenderer(sdlWin, -1, SDL_RendererFlags.SDL_RENDERER_ACCELERATED);
         if(sdlRend == nint.Zero)
@@ -35,17 +40,18 @@ public class Window
     }
 
     internal Window(WindowData data)
-        : this(data.title, data.loc, data.size, data.movable, data.resizable, new(data.color), data.entryDir)
-    {
-    }
+        : this(data.title, data.loc, data.size, data.movable, data.resizable, new(data.color), data.loc, data.size)
+    {}
 
 
-    public readonly nint sdlWin, sdlRend;
+    public readonly nint sdlWin;
     public readonly u32 id;
     public readonly bool movable, resizable;
     public readonly ColorPalette colors;
-    public readonly V2f exitPos;
+    public readonly V2f exitLoc, exitSize;
 
+
+    public nint sdlRend { get; private set; }
 
     private V2f _worldLoc;
     /// <summary>Also sets screenLoc to the appropriate values</summary>
@@ -101,6 +107,15 @@ public class Window
 
     public void UpdateWindowSize()
         => SDL_SetWindowSize(sdlWin, screenSize.x, screenSize.y);
+
+    public void RecreateRenderer()
+    {
+        SDL_DestroyRenderer(sdlRend);
+
+        sdlRend = SDL_CreateRenderer(sdlWin, -1, SDL_RendererFlags.SDL_RENDERER_ACCELERATED);
+        if(sdlRend == nint.Zero)
+            ThrowSdlError("Failed to create renderer [@ Window.RecreateRenderer]");
+    }
 
 
     internal void Destroy()

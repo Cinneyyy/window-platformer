@@ -8,6 +8,7 @@ public enum ObjectType : u8
     Breakable,
     Goal,
     Portal,
+    Text,
 
     _Count
 }

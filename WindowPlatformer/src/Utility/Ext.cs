@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace src.Dev;
+namespace src.Utility;
 
 public static class Ext
 {
@@ -30,4 +30,14 @@ public static class Ext
         for(i32 i = 0; i < arr.Length; i++)
             arr[i] = initialize(i);
     }
+
+    public static bool Contains(this SDL_Rect rect, V2i pt)
+        => pt.x >= rect.x && pt.x < (rect.x + rect.w) &&
+           pt.y >= rect.y && pt.y < (rect.y + rect.h);
+    public static bool Contains(this (f32 x, f32 y, f32 w, f32 h) rect, V2f pt)
+        => pt.x >= rect.x && pt.x < (rect.x + rect.w) &&
+           pt.y >= rect.y && pt.y < (rect.y + rect.h);
+    public static bool Contains(this (i32 x, i32 y, i32 w, i32 h) rect, V2i pt)
+        => pt.x >= rect.x && pt.x < (rect.x + rect.w) &&
+           pt.y >= rect.y && pt.y < (rect.y + rect.h);
 }

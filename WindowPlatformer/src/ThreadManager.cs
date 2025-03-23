@@ -1,11 +1,16 @@
 using System;
 using System.Collections.Concurrent;
+using src.Debugging;
+using src.Gui;
+using src.LevelSystem;
 
 namespace src;
 
 public static class ThreadManager
 {
     private const i32 WINDOW_THREAD_COUNT = 2;
+
+    public static event Action dynamicTick;
 
     private static bool initiated;
     private static WindowThread[] windowThreads;
@@ -16,6 +21,7 @@ public static class ThreadManager
     public static bool isRunning { get; private set; }
     public static bool runWindowThreads { get; private set; }
     public static WindowThread activeWindowThread => windowThreads[activeWindowThreadIndex];
+    public static f32 deltaTime { get; private set; }
 
 
     public static void Init()
@@ -55,11 +61,10 @@ public static class ThreadManager
         activeWindowThread.Resume();
 
         u32 lastFrame = SDL_GetTicks();
-        f32 deltaTime;
 
         while(isRunning)
         {
-            if(WindowEngine.isBusy)
+            if(WindowManager.isBusy)
             {
                 SDL_Delay(1);
                 continue;
@@ -70,8 +75,8 @@ public static class ThreadManager
             lastFrame = now;
 
             Input.Tick();
-
             PlayerController.Tick(deltaTime);
+            dynamicTick?.Invoke();
 
             while(mainThreadRequests.TryDequeue(out (Action action, Ref<bool> completed) request))
             {
@@ -81,9 +86,15 @@ public static class ThreadManager
 
             if(Input.KeyDown(Key.R))
                 LevelManager.ReloadLevel();
+            if(Input.KeyDown(Key.N))
+                LevelManager.AdvanceLevel();
+            if(Input.KeyDown(Key.Esc))
+                if(MainMenu.isActive) MainMenu.Quit();
+                else MainMenu.Load();
+            if(Input.KeyDown(Key.F1))
+                FancyConsole.SetVisible(true);
 
-            foreach(Window win in WindowEngine.windows)
-                Renderer.DrawWindow(win);
+            Renderer.DrawAllWindows();
 
             SDL_Delay(1);
         }
@@ -93,6 +104,9 @@ public static class ThreadManager
     {
         isRunning = false;
         runWindowThreads = false;
+
+        foreach(WindowThread thread in windowThreads)
+            thread.Resume();
     }
 
     public static void RunOnWindowThread(Action action, bool waitUntilCompleted)

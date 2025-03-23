@@ -1,6 +1,6 @@
 using System;
 
-namespace src.Dev;
+namespace src.Utility;
 
 public static class GlobalUtility
 {

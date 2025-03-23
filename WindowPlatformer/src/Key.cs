@@ -65,6 +65,7 @@ public enum Key : u8
     Space,
     Return,
     Tab,
+    Esc,
 
     Lmb,
     Rmb,

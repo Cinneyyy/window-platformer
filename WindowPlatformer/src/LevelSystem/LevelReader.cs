@@ -3,7 +3,7 @@ using System.IO;
 using System;
 using System.Linq;
 
-namespace src;
+namespace src.LevelSystem;
 
 public static class LevelReader
 {
@@ -53,9 +53,14 @@ public static class LevelReader
 
             if(ctx == Context.Window)
             {
-                (string title, V2f size, V2f loc, bool movable, bool resizable, u32 color, V2f entryDir) winData = ("", V2f.zero, V2f.zero, false, false, 0xffffff, V2f.zero);
+                (string title, V2f size, V2f loc, bool movable, bool resizable, u32 color, V2f entryDir, V2f entrySize) winData = ("", V2f.zero, V2f.zero, false, false, 0xffffff, V2f.zero, new(1f));
 
-                foreach(string token in ln.Split(", ", StringSplitOptions.RemoveEmptyEntries).Select(t => t.Trim()))
+                foreach(string token in ln
+                    .Split(", ", StringSplitOptions.RemoveEmptyEntries) // Split by comma
+                    .SelectMany(t => t.Split(' ', '\t'))                // Split by space & tab
+                    .Select(t => t
+                        .Trim()                                         // Trim
+                        .Replace("%%", " ")))                           // Substitute "%%" with space
                     switch(token)
                     {
                         case var _ when token.StartsWith('"') && token.EndsWith('"'):
@@ -93,7 +98,7 @@ public static class LevelReader
                                 break;
                             }
 
-                            winData.entryDir = WINDOW_ENTRY_MUL * (t switch
+                            winData.entryDir = WINDOW_ENTRY_MUL * t switch
                             {
                                 "u" or "up" => V2f.up,
                                 "d" or "down" => V2f.down,
@@ -101,19 +106,29 @@ public static class LevelReader
                                 "r" or "right" => V2f.right,
                                 "n" or "none" or "0" => V2f.zero,
                                 _ => throw new($"Invalid entry direction: {t}")
-                            });
+                            };
 
                             break;
                         }
+                        case var _ when token.StartsWith('*'):
+                        {
+                            string[] xy = token[1..].Split('*');
+                            winData.entrySize = new(f32.Parse(xy[0]), f32.Parse(xy[1]));
+                            break;
+                        }
+                        default: break;
                     }
 
-                windows.Add(new(winData.title, winData.loc, winData.size, winData.movable, winData.resizable, winData.color, winData.entryDir));
+                windows.Add(new(winData.title, winData.loc, winData.size, winData.movable, winData.resizable, winData.color, winData.entryDir, winData.entrySize));
             }
             else if(ctx == Context.Object)
             {
-                (V2f loc, V2f size, ObjectType type) objData = new(V2f.zero, V2f.zero, ObjectType.Wall);
+                (V2f loc, V2f size, ObjectType type, string text) objData = new(V2f.zero, V2f.zero, ObjectType.Wall, null);
 
-                foreach(string token in ln.Split(", ", StringSplitOptions.RemoveEmptyEntries).Select(t => t.Trim()))
+                foreach(string token in ln
+                    .Split(", ", StringSplitOptions.RemoveEmptyEntries) // Split by comma
+                    .SelectMany(t => t.Split(' ', '\t'))                // Split by space & tab
+                    .Select(t => t.Trim()))                             // Trim
                     switch(token)
                     {
                         case var _ when token.All(char.IsLetter):
@@ -131,9 +146,18 @@ public static class LevelReader
                             objData.loc = new(f32.Parse(xy[0]), f32.Parse(xy[1]));
                             break;
                         }
+                        case var _ when token.StartsWith('"') && token.EndsWith('"'):
+                        {
+                            objData.text = token[1..^1];
+                            break;
+                        }
+                        default: break;
                     }
 
-                objects.Add(new(objData.loc, objData.size, objData.type));
+                if(objData.text is not null)
+                    objData.type = ObjectType.Text;
+
+                objects.Add(new(objData.loc, objData.size, objData.type, objData.text));
             }
         }
 

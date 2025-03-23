@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Concurrent;
 using System.Threading;
+using src.Gui;
+using src.LevelSystem;
 
 namespace src;
 
@@ -35,6 +37,30 @@ public class WindowThread
     public void Resume()
         => waitHandle.Set();
 
+    public void Stop()
+        => thread.Interrupt();
+
+
+    private void ThreadRun()
+    {
+        SDL_AddEventWatch(EventWatch, nint.Zero);
+
+        while(ThreadManager.runWindowThreads)
+        {
+            waitHandle.WaitOne();
+
+            while(ThreadManager.runWindowThreads && SDL_PollEvent(out _) == 1)
+                continue;
+
+            while(ThreadManager.runWindowThreads && eventRequests.TryDequeue(out (Action action, Ref<bool> completed) request))
+            {
+                request.action?.Invoke();
+                request.completed?.Set(true);
+            }
+
+            SDL_Delay(1);
+        }
+    }
 
     private unsafe i32 EventWatch(nint data, nint evtPtr)
     {
@@ -52,7 +78,7 @@ public class WindowThread
                 if(!LevelManager.ready)
                     break;
 
-                Window win = WindowEngine.GetWindowFromId(evt->window.windowID);
+                Window win = WindowManager.GetWindowFromId(evt->window.windowID);
 
                 if(win is null)
                     break;
@@ -65,6 +91,9 @@ public class WindowThread
                     case SDL_WindowEventID.SDL_WINDOWEVENT_RESIZED:
                         win.screenSize = new(evt->window.data1, evt->window.data2);
                         break;
+                    case SDL_WindowEventID.SDL_WINDOWEVENT_CLOSE:
+                        Input.SimulateKey(Key.Esc, true);
+                        break;
                     default:
                         break;
                 }
@@ -76,27 +105,5 @@ public class WindowThread
         }
 
         return 0;
-    }
-
-    private void ThreadRun()
-    {
-        SDL_AddEventWatch(EventWatch, nint.Zero);
-
-        Log("Ran thread " + thread.ManagedThreadId);
-        while(ThreadManager.runWindowThreads)
-        {
-            waitHandle.WaitOne();
-
-            while(SDL_PollEvent(out _) == 1)
-                continue;
-
-            while(eventRequests.TryDequeue(out (Action action, Ref<bool> completed) request))
-            {
-                request.action?.Invoke();
-                request.completed?.Set(true);
-            }
-
-            SDL_Delay(1);
-        }
     }
 }

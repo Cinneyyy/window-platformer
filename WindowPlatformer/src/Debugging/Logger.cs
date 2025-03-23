@@ -55,10 +55,19 @@ public static class Logger
     public static void LogSdlError(string message)
         => LogError($"\"{SDL_GetError()}\"{(string.IsNullOrWhiteSpace(message) ? "" : $" ({message})")}");
 
-    public static void ThrowSdlError(this i32 code, string message = "")
+    public static i32 ThrowSdlError(this i32 code, string message = "")
     {
         if(code < 0)
             throw new SdlException($"SDL Error: \"{SDL_GetError()}\"{(string.IsNullOrWhiteSpace(message) ? "" : $" ({message})")}");
+
+        return code;
+    }
+    public static nint ThrowSdlError(this nint ptr, string message)
+    {
+        if(ptr == nint.Zero)
+            throw new SdlException($"SDL Error: \"{SDL_GetError()}\"{(string.IsNullOrWhiteSpace(message) ? "" : $" ({message})")}");
+
+        return ptr;
     }
     public static void ThrowSdlError(string message = "")
         => throw new SdlException($"SDL Error: \"{SDL_GetError()}\"{(string.IsNullOrWhiteSpace(message) ? "" : $" ({message})")}");

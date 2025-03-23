@@ -15,6 +15,10 @@ public static partial class Input
 
         for(i32 i = 0; i < KeyState.KEY_COUNT; i++)
             keyState[i] = (GetAsyncKeyState(KeyToVKey((Key)i)) & 0x8000) != 0;
+
+        foreach((Key key, bool down) in simulatedKeys)
+            keyState[key] = down;
+        simulatedKeys.Clear();
     }
 
 
@@ -39,6 +43,10 @@ public static partial class Input
             Key.Tab => 0x9,
             Key.Return => 0xd,
             Key.Space => 0x20,
+            Key.Esc => 0x1b,
+            Key.Lmb => 0x01,
+            Key.Rmb => 0x2,
+            Key.Mmb => 0x4,
             _ => 0
         };
 #pragma warning restore
