@@ -120,7 +120,7 @@ public static class PlayerController
     }
 
     private static void LoseLevel()
-        => MainMenu.Load();
+        => LevelManager.ReloadLevel();
 
     private static void WinLevel()
         => LevelManager.AdvanceLevel();

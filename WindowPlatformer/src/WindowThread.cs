@@ -45,14 +45,14 @@ public class WindowThread
     {
         SDL_AddEventWatch(EventWatch, nint.Zero);
 
-        while(ThreadManager.runWindowThreads)
+        while(ThreadManager.isRunning)
         {
             waitHandle.WaitOne();
 
-            while(ThreadManager.runWindowThreads && SDL_PollEvent(out _) == 1)
+            while(ThreadManager.isRunning && SDL_PollEvent(out _) == 1)
                 continue;
 
-            while(ThreadManager.runWindowThreads && eventRequests.TryDequeue(out (Action action, Ref<bool> completed) request))
+            while(ThreadManager.isRunning && eventRequests.TryDequeue(out (Action action, Ref<bool> completed) request))
             {
                 request.action?.Invoke();
                 request.completed?.Set(true);

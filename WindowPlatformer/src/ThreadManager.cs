@@ -16,17 +16,17 @@ public static class ThreadManager
     private static WindowThread[] windowThreads;
     private static i32 activeWindowThreadIndex;
     private static readonly ConcurrentQueue<(Action action, Ref<bool> completed)> mainThreadRequests = [];
+    private static bool isAlive;
 
 
     public static bool isRunning { get; private set; }
-    public static bool runWindowThreads { get; private set; }
     public static WindowThread activeWindowThread => windowThreads[activeWindowThreadIndex];
     public static f32 deltaTime { get; private set; }
 
 
     public static void Init()
     {
-        if(initiated || isRunning)
+        if(initiated || isAlive)
         {
             LogError("Cannot call Init multiple times or while already running");
             return;
@@ -36,8 +36,9 @@ public static class ThreadManager
 
         Screen.Init();
         Input.Init();
+        DevConsole.Init();
 
-        runWindowThreads = true;
+        isRunning = true;
         windowThreads = new WindowThread[WINDOW_THREAD_COUNT];
         for(i32 i = 0; i < WINDOW_THREAD_COUNT; i++)
         {
@@ -50,19 +51,19 @@ public static class ThreadManager
 
     public static void Run()
     {
-        if(!initiated || isRunning)
+        if(!initiated || isAlive)
         {
             LogError("Cannot call Run before Init or while already running");
             return;
         }
 
-        isRunning = true;
+        isAlive = true;
 
         activeWindowThread.Resume();
 
         u32 lastFrame = SDL_GetTicks();
 
-        while(isRunning)
+        while(isAlive)
         {
             if(WindowManager.isBusy)
             {
@@ -84,15 +85,25 @@ public static class ThreadManager
                 request.completed?.Set(true);
             }
 
-            if(Input.KeyDown(Key.R))
-                LevelManager.ReloadLevel();
-            if(Input.KeyDown(Key.N))
-                LevelManager.AdvanceLevel();
-            if(Input.KeyDown(Key.Esc))
-                if(MainMenu.isActive) MainMenu.Quit();
-                else MainMenu.Load();
             if(Input.KeyDown(Key.F1))
                 FancyConsole.SetVisible(true);
+            if(Input.KeyDown(Key.R))
+                LevelManager.ReloadLevel();
+
+            if(!MainMenu.isActive)
+            {
+                if(Input.KeyDown(Key.N))
+                    LevelManager.AdvanceLevel();
+                if(Input.KeyDown(Key.Esc))
+                    MainMenu.Load();
+            }
+            else
+            {
+                if(Input.KeyDown(Key.N))
+                    MainMenu.Begin();
+                if(Input.KeyDown(Key.Esc))
+                    MainMenu.Quit();
+            }
 
             Renderer.DrawAllWindows();
 
@@ -102,8 +113,8 @@ public static class ThreadManager
 
     public static void Quit()
     {
+        isAlive = false;
         isRunning = false;
-        runWindowThreads = false;
 
         foreach(WindowThread thread in windowThreads)
             thread.Resume();

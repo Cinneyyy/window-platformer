@@ -13,6 +13,7 @@ public static class Logger
     public static readonly LogType LOG_INFO = new("Info", "%F(#bfbfbf)%");
     public static readonly LogType LOG_DEBUG = new("Debug", "%F(#20bb10)%");
     public static readonly LogType LOG_SDL = new("SDL", "%F(#10dcff)%");
+    public static readonly LogType LOG_DEV = new("Dev", "%F(#9310ff)%");
 
 
     public static void Log<T>(this T obj)

@@ -1,11 +1,12 @@
 using src.Debugging;
 using src.LevelSystem;
+using src.Utility;
 
 namespace src;
 
 public class Window
 {
-    internal Window(string title, V2f loc, V2f size, bool movable, bool resizable, ColorPalette colors, V2f entryLoc, V2f entrySize, bool entryRedraw)
+    internal Window(string title, V2f loc, V2f size, bool movable, bool resizable, ColorPalette colors, V2f entryLoc, V2f entrySize, bool entryRedraw, SDL_WindowFlags flags = 0)
     {
         this.colors = colors;
         this.movable = movable;
@@ -17,11 +18,8 @@ public class Window
         worldSize = size;
         worldLoc = loc;
 
-        SDL_WindowFlags flags =
-            (movable ? 0 : SDL_WindowFlags.SDL_WINDOW_BORDERLESS) |
-            (resizable ? 0 : SDL_WindowFlags.SDL_WINDOW_RESIZABLE);
-
-        sdlWin = SDL_CreateWindow(title, screenLoc.x, screenLoc.y, screenSize.x, screenSize.y, flags);
+        flags |= movable ? 0 : SDL_WindowFlags.SDL_WINDOW_BORDERLESS;
+        sdlWin = SDL_CreateWindow(title, screenLoc.x - screenSize.x/2, screenLoc.y + screenSize.y/2, screenSize.x, screenSize.y, flags);
         if(sdlWin == nint.Zero)
             ThrowSdlError("Failed to create window [@ Window.ctor]");
 
@@ -29,6 +27,7 @@ public class Window
         if(sdlRend == nint.Zero)
             ThrowSdlError("Failed to create renderer [@ Window.ctor]");
 
+        SDL_SetWindowResizable(sdlWin, resizable.ToSdlBool());
         id = SDL_GetWindowID(sdlWin);
 
         colors.background.GetRgb(out u8 r, out u8 g, out u8 b);
@@ -37,8 +36,8 @@ public class Window
         SDL_RenderPresent(sdlRend);
     }
 
-    internal Window(WindowData data)
-        : this(data.title, data.loc, data.size, data.movable, data.resizable, new(data.color), data.loc - data.entryLoc, data.size * data.entrySize, data.entryRedraw)
+    internal Window(WindowData data, SDL_WindowFlags flags = 0)
+        : this(data.title, data.loc, data.size, data.movable, data.resizable, new(data.color), data.entryLoc, data.entrySize, data.entryRedraw, flags)
     {}
 
 

@@ -1,15 +1,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using src.LevelSystem;
-using src.Utility;
 
 namespace src;
 
 public static class WindowManager
 {
     private const i32 WINDOW_ANIM_DT = 1;
-    private const i32 ENTRY_ANIM_TIME = 375;
-    private const i32 EXIT_ANIM_TIME = 300;
+    private const i32 ENTRY_ANIM_TIME = 500;
+    private const i32 EXIT_ANIM_TIME = 450;
 
     public static readonly List<Window> windows = [];
 
@@ -22,13 +21,20 @@ public static class WindowManager
         isBusy = true;
 
         Window[] wins = null;
-        ThreadManager.RunOnWindowThread(() => wins = data.Select(d => new Window(d)).ToArray(), true);
+        ThreadManager.RunOnWindowThread(() => wins = data.Select(d => new Window(d, entryAnim ? SDL_WindowFlags.SDL_WINDOW_HIDDEN : 0)).ToArray(), true);
 
         foreach(Window win in wins)
             Renderer.DrawWindow(win);
 
         if(entryAnim)
         {
+            foreach(Window win in wins)
+            {
+                win.worldLoc = win.entryLoc;
+                win.UpdateWindowPos();
+                SDL_ShowWindow(win.sdlWin);
+            }
+
             u32 startTime = SDL_GetTicks();
 
             while(SDL_GetTicks() - startTime < ENTRY_ANIM_TIME)
@@ -44,10 +50,12 @@ public static class WindowManager
                     win.worldLoc = V2f.Lerp(dat.entryLoc, dat.loc, t);
 
                     win.UpdateWindowPos();
-                    ThreadManager.RunOnWindowThread(win.UpdateWindowSize, true);
+                    win.UpdateWindowSize();
 
                     if(win.entryRedraw)
                         Renderer.DrawWindow(win);
+                    else
+                        Renderer.DrawWindow(win, Screen.WorldPointToScreen(dat.loc + new V2f(-dat.size.x/2f, dat.size.y/2f)));
                 }
 
                 SDL_Delay(WINDOW_ANIM_DT);
@@ -62,7 +70,7 @@ public static class WindowManager
                 win.worldLoc = dat.loc;
 
                 win.UpdateWindowPos();
-                ThreadManager.RunOnWindowThread(win.UpdateWindowSize, true);
+                win.UpdateWindowSize();
 
                 Renderer.DrawWindow(win);
             }
@@ -90,21 +98,25 @@ public static class WindowManager
 
         if(exitAnim)
         {
-            u32 animStart = SDL_GetTicks();
-            V2f[] startPos = windows.Select(w => w.worldLoc).ToArray();
-            V2f[] startSize = windows.Select(w => w.worldSize).ToArray();
+            u32 startTime = SDL_GetTicks();
+            (V2f size, V2f loc)[] startingValues = windows.Select(w => (w.worldSize, w.worldLoc)).ToArray();
 
-            while(SDL_GetTicks() - animStart is u32 timePassed && timePassed < EXIT_ANIM_TIME)
+            while(SDL_GetTicks() - startTime < EXIT_ANIM_TIME)
             {
-                f32 t = Easing.In.Cube((f32)timePassed / EXIT_ANIM_TIME);
+                f32 t = Easing.In.Cube((f32)(SDL_GetTicks() - startTime) / EXIT_ANIM_TIME);
 
-                for(i32 i = 0; i < startPos.Length; i++)
+                for(i32 i = 0; i < windows.Count; i++)
                 {
-                    windows[i].worldSize = V2f.Lerp(startSize[i], windows[i].entrySize, t);
-                    windows[i].worldLoc = V2f.Lerp(startPos[i], windows[i].entryLoc, t);
+                    Window win = windows[i];
 
-                    windows[i].UpdateWindowSize();
-                    windows[i].UpdateWindowPos();
+                    win.worldSize = V2f.Lerp(startingValues[i].size, win.entrySize, t);
+                    win.worldLoc = V2f.Lerp(startingValues[i].loc, win.entryLoc, t);
+
+                    win.UpdateWindowPos();
+                    win.UpdateWindowSize();
+
+                    if(win.entryRedraw)
+                        Renderer.DrawWindow(win);
                 }
 
                 SDL_Delay(WINDOW_ANIM_DT);

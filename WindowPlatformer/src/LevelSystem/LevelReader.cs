@@ -164,6 +164,6 @@ public static class LevelReader
             }
         }
 
-        return new([..windows], [..objects]);
+        return new([..windows], [..objects], path);
     }
 }

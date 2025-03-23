@@ -31,6 +31,15 @@ public static class MainMenu
         ThreadManager.Quit();
     }
 
+    public static void Begin()
+    {
+        ThreadManager.dynamicTick -= Tick;
+        isActive = false;
+
+        LevelManager.UnloadLevel();
+        LevelManager.LoadLevel(LevelManager.levelList[0]);
+    }
+
 
     private static void Tick()
     {
@@ -53,14 +62,5 @@ public static class MainMenu
                 }
             }
         }
-    }
-
-    private static void Begin()
-    {
-        ThreadManager.dynamicTick -= Tick;
-        isActive = false;
-
-        LevelManager.UnloadLevel();
-        LevelManager.LoadLevel(LevelManager.levelList[0]);
     }
 }
