@@ -4,7 +4,7 @@ Windows:
 - "Start" -1.2/0.65 1x0.5 #ff0000 ^down er:false
 - "Drop" -0.95/-0.175 0.5x1.15 #00ff00 ^right er:false
 - "Goal" 1/-0.4 0.4x0.7 #0000ff ^up er:false
-- "Lense" 0/0 0.5x0.4 #ff00ff ^-2^0 m:true *0*0 er:false
+- "Lense" 0/0 0.5x0.4 #ff00ff ^-3^0 m:true er:false
 
 Objects:
 - -1.7/0.65 0.1x0.6
