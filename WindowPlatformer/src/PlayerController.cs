@@ -2,11 +2,21 @@ using System.Linq;
 using src.Utility;
 using src.LevelSystem;
 using src.Gui;
+using System.Collections.Generic;
 
 namespace src;
 
 public static class PlayerController
 {
+    public record class PlayerState(GameObject obj)
+    {
+        public GameObject obj = obj;
+        public V2f vel;
+        public f32 timeSinceGrounded;
+        public f32 timeSinceJumpAttempt;
+    }
+
+
     public const f32 TIME_SCALE = 0.85f;
     public const f32 GRAVITY = -10f;
     public const f32 STOMP_SPEED = -40f;
@@ -17,83 +27,84 @@ public static class PlayerController
     public const f32 JUMP_VALIDATION_WINDOW = 0.225f;
     public const f32 COYOTE_TIME = 0.175f;
 
-    private static V2f vel;
-    private static f32 timeSinceGrounded;
-    private static f32 timeSinceJumpAttempt;
+    private static List<PlayerState> playersAtGoal;
 
 
-    public static GameObject[] playerObjs { get; set; } = [];
+    public static PlayerState[] playerObjs { get; set; } = [];
 
 
     public static void OnLevelLoaded()
     {
-        vel = V2f.zero;
-        timeSinceGrounded = 0f;
-        timeSinceJumpAttempt = 0f;
-        playerObjs = [..GameObjectManager.objs.FindAll(o => o.type == ObjectType.Player)];
+        playersAtGoal = [];
+        playerObjs = GameObjectManager.objs
+            .FindAll(o => o.type == ObjectType.Player)
+            .Select(o => new PlayerState(o))
+            .ToArray();
     }
 
     public static void Tick(f32 dt)
     {
-        foreach(GameObject playerObj in playerObjs)
-            Tick(dt, playerObj);
+        foreach(PlayerState state in playerObjs)
+            Tick(dt, state);
     }
 
 
-    private static void Tick(f32 dt, GameObject playerObj)
+    private static void Tick(f32 dt, PlayerState state)
     {
-        if(!LevelManager.ready || playerObj is null)
+        if(!LevelManager.ready)
             return;
+
+        GameObject playerObj = state.obj;
 
         f32 unscaledDt = dt;
         dt = f32.Min(dt * TIME_SCALE, 0.01f);
 
-        vel.y += GRAVITY * dt;
+        state.vel.y += GRAVITY * dt;
 
         bool rInput = Input.KeyHeld(Key.Right, Key.D);
         bool lInput = Input.KeyHeld(Key.Left, Key.A);
 
         if(rInput)
-            vel.x += H_ACC * dt;
+            state.vel.x += H_ACC * dt;
         if(lInput)
-            vel.x -= H_ACC * dt;
+            state.vel.x -= H_ACC * dt;
 
         if(!rInput && !lInput)
         {
-            vel.x -= f32.Sign(vel.x) * H_DAMP * dt;
+            state.vel.x -= f32.Sign(state.vel.x) * H_DAMP * dt;
 
-            if(f32.Abs(vel.x) < 0.3f)
-                vel.x = 0f;
+            if(f32.Abs(state.vel.x) < 0.3f)
+                state.vel.x = 0f;
         }
 
-        vel.x = f32.Clamp(vel.x, -MAX_H_SPEED, MAX_H_SPEED);
+        state.vel.x = f32.Clamp(state.vel.x, -MAX_H_SPEED, MAX_H_SPEED);
 
         bool stomping = Input.KeyHeld(Key.Down, Key.S);
         if(stomping)
-            vel.y += STOMP_SPEED * dt;
+            state.vel.y += STOMP_SPEED * dt;
 
         if(Input.KeyDown(Key.W, Key.Up, Key.Space))
-            timeSinceJumpAttempt = JUMP_VALIDATION_WINDOW;
+            state.timeSinceJumpAttempt = JUMP_VALIDATION_WINDOW;
 
-        if(timeSinceGrounded > 0f && timeSinceJumpAttempt > 0f)
+        if(state.timeSinceGrounded > 0f && state.timeSinceJumpAttempt > 0f)
         {
-            vel.y = JUMP_STRENGTH;
-            timeSinceGrounded = 0f;
-            timeSinceJumpAttempt = 0f;
+            state.vel.y = JUMP_STRENGTH;
+            state.timeSinceGrounded = 0f;
+            state.timeSinceJumpAttempt = 0f;
         }
 
-        if(vel.y > 0f && !Input.KeyHeld(Key.W, Key.Up, Key.Space))
-            vel.y = 0f;
+        if(state.vel.y > 0f && !Input.KeyHeld(Key.W, Key.Up, Key.Space))
+            state.vel.y = 0f;
 
-        V2f newPos = playerObj.loc + vel * dt;
+        V2f newPos = playerObj.loc + state.vel * dt;
 
-        HandleCollision(playerObj, ref newPos, ref vel, out bool grounded, out GameObject col);
+        HandleCollision(playerObj, ref newPos, ref state.vel, out bool grounded, out GameObject col);
 
         if(grounded)
-            timeSinceGrounded = COYOTE_TIME;
+            state.timeSinceGrounded = COYOTE_TIME;
 
-        timeSinceJumpAttempt -= unscaledDt;
-        timeSinceGrounded -= unscaledDt;
+        state.timeSinceJumpAttempt -= unscaledDt;
+        state.timeSinceGrounded -= unscaledDt;
 
         playerObj.loc = newPos;
 
@@ -101,18 +112,24 @@ public static class PlayerController
             switch(col.type)
             {
                 case ObjectType.Danger: LoseLevel(); break;
-                case ObjectType.Goal: WinLevel(); break;
-                case ObjectType.Breakable:
+                case ObjectType.Goal:
                 {
-                    if(stomping)
-                        GameObjectManager.Destroy(col);
-                    else
-                        LoseLevel();
+                    if(!playersAtGoal.Contains(state))
+                        playersAtGoal.Add(state);
+
+                    if(playersAtGoal.Count == playerObjs.Length)
+                        WinLevel();
 
                     break;
                 }
-                default:
+                case ObjectType.Breakable:
+                {
+                    if(stomping) GameObjectManager.Destroy(col);
+                    else LoseLevel();
+
                     break;
+                }
+                default: break;
             }
 
         if(playerObj is not null && !WindowManager.windows.Any(w => RectsIntersect(playerObj.output.GetLoc(), playerObj.output.GetSize(), w.screenLoc, w.screenSize)))

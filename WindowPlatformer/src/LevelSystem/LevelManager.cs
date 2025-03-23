@@ -10,7 +10,7 @@ public static class LevelManager
     public const bool LOADING_ANIMATIONS = true;
 
     public static readonly LevelData[] levelList =
-        Enumerable.Range(0, 2)
+        Enumerable.Range(0, 3)
         .Select(i => $"res/levels/{i}.lvl")
         .Select(LevelReader.ReadFile)
         .ToArray();
