@@ -53,13 +53,11 @@ public static class PlayerController
 
     public static void Tick(f32 dt)
     {
-        bool stop = false;
         foreach(PlayerState state in playerObjs)
         {
+            Tick(dt, state, out bool stop);
             if(stop)
                 return;
-
-            Tick(dt, state, ref stop);
         }
 
         foreach(Window aw in auraWins)
@@ -70,10 +68,13 @@ public static class PlayerController
     }
 
 
-    private static void Tick(f32 dt, PlayerState state, ref bool stop)
+    private static void Tick(f32 dt, PlayerState state, out bool stop)
     {
         if(!LevelManager.ready)
+        {
+            stop = true;
             return;
+        }
 
         GameObject playerObj = state.obj;
 
@@ -173,6 +174,8 @@ public static class PlayerController
             stop = true;
             LoseLevel();
         }
+
+        stop = false;
     }
 
     private static void LoseLevel()
