@@ -2,9 +2,12 @@
 
 Windows:
 - "Tower" 0/0 1.8x1.8 #0000ff *1*0 r:true
-- "Lense" 1.3/-0 0.7x0.7 m:true #ff00ff ^left
+- "Lense" 1.3/-0 0.7x0.7 m:true #ff00ff ^-1^0 *1*0
 
 Objects:
+# Player
+- -0.8/-0.83 0.085x0.085 player
+
 # Floors
 - 0/-0.9 1.8x0.04
 - 0/-0.9 1.8x0.04
@@ -31,6 +34,3 @@ Objects:
 
 # Goal
 - 0/0.67 0.1x0.1 goal
-
-# Player
-- -0.8/-0.83 0.085x0.085 player

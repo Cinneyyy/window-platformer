@@ -27,6 +27,8 @@ public static class MainMenu
         ThreadManager.dynamicTick -= Tick;
         isActive = false;
 
+        WindowManager.exitAnimTime = 1000;
+
         LevelManager.UnloadLevel();
         ThreadManager.Quit();
     }

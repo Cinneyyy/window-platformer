@@ -5,10 +5,13 @@ using src.Utility;
 
 namespace src.Debugging;
 
-public partial class FancyConsole
+public partial class ConsoleWindow
 {
     private static readonly nint hWnd = GetConsoleWindow();
     private static readonly nint hStd = GetStdHandle(-11);
+
+
+    public static bool hasFocus => GetForegroundWindow() == hWnd;
 
 
     public static string FormatColor(string msg)
@@ -57,6 +60,9 @@ public partial class FancyConsole
     [LibraryImport("kernel32.dll")]
     [return: MarshalAs(UnmanagedType.SysInt)]
     private static partial nint GetStdHandle(i32 handle);
+
+    [LibraryImport("user32.dll")]
+    private static partial nint GetForegroundWindow();
     #endregion
 
 

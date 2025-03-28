@@ -6,7 +6,7 @@ namespace src;
 
 public class Window
 {
-    internal Window(string title, V2f loc, V2f size, bool movable, bool resizable, ColorPalette colors, V2f entryLoc, V2f entrySize, bool entryRedraw, SDL_WindowFlags flags = 0)
+    internal Window(string title, V2f loc, V2f size, bool movable, bool resizable, ColorPalette colors, V2f entryLoc, V2f entrySize, bool entryRedraw, i32 auraIndex, SDL_WindowFlags flags = 0)
     {
         this.colors = colors;
         this.movable = movable;
@@ -14,6 +14,7 @@ public class Window
         this.entryLoc = entryLoc;
         this.entrySize = entrySize;
         this.entryRedraw = entryRedraw;
+        this.auraIndex = auraIndex;
 
         worldSize = size;
         worldLoc = loc;
@@ -37,7 +38,7 @@ public class Window
     }
 
     internal Window(WindowData data, SDL_WindowFlags flags = 0)
-        : this(data.title, data.loc, data.size, data.movable, data.resizable, new(data.color), data.entryLoc, data.entrySize, data.entryRedraw, flags)
+        : this(data.title, data.loc, data.size, data.movable, data.resizable, new(data.color), data.entryLoc, data.entrySize, data.entryRedraw, data.auraIndex, flags)
     {}
 
 
@@ -47,6 +48,7 @@ public class Window
     public readonly ColorPalette colors;
     public readonly V2f entryLoc, entrySize;
     public readonly bool entryRedraw;
+    public readonly i32 auraIndex;
 
 
     private V2f _worldLoc;

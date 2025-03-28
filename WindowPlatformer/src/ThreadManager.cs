@@ -79,6 +79,8 @@ public static class ThreadManager
             PlayerController.Tick(deltaTime);
             dynamicTick?.Invoke();
 
+            Renderer.DrawAllWindows();
+
             while(mainThreadRequests.TryDequeue(out (Action action, Ref<bool> completed) request))
             {
                 request.action?.Invoke();
@@ -86,9 +88,17 @@ public static class ThreadManager
             }
 
             if(Input.KeyDown(Key.F1))
-                FancyConsole.SetVisible(true);
+                ConsoleWindow.SetVisible(true);
             if(Input.KeyDown(Key.R))
-                LevelManager.ReloadLevel();
+            {
+                if(Input.KeyHeld(Key.Ctrl))
+                {
+                    LevelManager.RereadLevelList();
+                    LevelManager.ReloadLevel(true);
+                }
+                else
+                    LevelManager.ReloadLevel();
+            }
 
             if(!MainMenu.isActive)
             {
@@ -104,8 +114,6 @@ public static class ThreadManager
                 if(Input.KeyDown(Key.Esc))
                     MainMenu.Quit();
             }
-
-            Renderer.DrawAllWindows();
 
             SDL_Delay(1);
         }

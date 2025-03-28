@@ -1,19 +1,20 @@
 using System.Collections.Generic;
 using System.Linq;
 using src.LevelSystem;
+using src.Utility;
 
 namespace src;
 
 public static class WindowManager
 {
     private const i32 WINDOW_ANIM_DT = 1;
-    private const i32 ENTRY_ANIM_TIME = 500;
-    private const i32 EXIT_ANIM_TIME = 450;
 
     public static readonly List<Window> windows = [];
 
 
     public static bool isBusy { get; private set; } = false;
+    public static i32 entryAnimTime { get; set; } = 500;
+    public static i32 exitAnimTime { get; set; } = 450;
 
 
     public static Window[] CreateWindows(WindowData[] data, bool entryAnim = true)
@@ -21,7 +22,10 @@ public static class WindowManager
         isBusy = true;
 
         Window[] wins = null;
-        ThreadManager.RunOnWindowThread(() => wins = data.Select(d => new Window(d, entryAnim ? SDL_WindowFlags.SDL_WINDOW_HIDDEN : 0)).ToArray(), true);
+        if(entryAnim)
+            ThreadManager.RunOnWindowThread(() => wins = data.Select(d => new Window(d with { movable = false }, SDL_WindowFlags.SDL_WINDOW_HIDDEN)).ToArray(), true);
+        else
+            ThreadManager.RunOnWindowThread(() => wins = data.Select(d => new Window(d, 0)).ToArray(), true);
 
         foreach(Window win in wins)
             Renderer.DrawWindow(win);
@@ -37,9 +41,9 @@ public static class WindowManager
 
             u32 startTime = SDL_GetTicks();
 
-            while(SDL_GetTicks() - startTime < ENTRY_ANIM_TIME)
+            while(SDL_GetTicks() - startTime < entryAnimTime)
             {
-                f32 t = Easing.Out.Cube((f32)(SDL_GetTicks() - startTime) / ENTRY_ANIM_TIME);
+                f32 t = Easing.Out.Cube((f32)(SDL_GetTicks() - startTime) / entryAnimTime);
 
                 for(i32 i = 0; i < wins.Length; i++)
                 {
@@ -72,8 +76,13 @@ public static class WindowManager
                 win.UpdateWindowPos();
                 win.UpdateWindowSize();
 
+                if(dat.movable)
+                    SDL_SetWindowBordered(win.sdlWin, true.ToSdlBool());
+
                 Renderer.DrawWindow(win);
             }
+
+            SDL_RaiseWindow(wins.Last().sdlWin);
         }
 
         windows.AddRange(wins);
@@ -101,9 +110,9 @@ public static class WindowManager
             u32 startTime = SDL_GetTicks();
             (V2f size, V2f loc)[] startingValues = windows.Select(w => (w.worldSize, w.worldLoc)).ToArray();
 
-            while(SDL_GetTicks() - startTime < EXIT_ANIM_TIME)
+            while(SDL_GetTicks() - startTime < exitAnimTime)
             {
-                f32 t = Easing.In.Cube((f32)(SDL_GetTicks() - startTime) / EXIT_ANIM_TIME);
+                f32 t = Easing.In.Cube((f32)(SDL_GetTicks() - startTime) / exitAnimTime);
 
                 for(i32 i = 0; i < windows.Count; i++)
                 {

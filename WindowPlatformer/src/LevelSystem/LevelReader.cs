@@ -46,14 +46,14 @@ public static class LevelReader
                 continue;
             }
 
-            if(!ln.StartsWith("- "))
-                continue;
-            else
+            if(ln.StartsWith("- "))
                 ln = ln[2..];
+            else if(ln.StartsWith('#') || string.IsNullOrWhiteSpace(ln))
+                continue;
 
             if(ctx == Context.Window)
             {
-                (string title, V2f size, V2f loc, bool movable, bool resizable, u32 color, V2f entryDir, V2f entrySize, bool entryRedraw) winData = ("", V2f.zero, V2f.zero, false, false, 0xffffff, V2f.zero, new(1f), true);
+                (string title, V2f size, V2f loc, bool movable, bool resizable, u32 color, V2f entryDir, V2f entrySize, bool entryRedraw, i32 auraIndex) winData = ("", V2f.zero, V2f.zero, false, false, 0xffffff, V2f.zero, new(1f), true, -1);
 
                 foreach(string token in ln
                     .Split(", ", StringSplitOptions.RemoveEmptyEntries) // Split by comma
@@ -77,6 +77,9 @@ public static class LevelReader
                             break;
                         case "er:true" or "er:false":
                             winData.entryRedraw = token == "er:true";
+                            break;
+                        case var _ when token.StartsWith("aura:"):
+                            winData.auraIndex = i32.Parse(token["aura:".Length..]);
                             break;
                         case var _ when token.Contains('x'):
                         {
@@ -122,7 +125,7 @@ public static class LevelReader
                         default: break;
                     }
 
-                windows.Add(new(winData.title, winData.loc, winData.size, winData.movable, winData.resizable, winData.color, winData.loc - winData.entryDir, winData.size * winData.entrySize, winData.entryRedraw));
+                windows.Add(new(winData.title, winData.loc, winData.size, winData.movable, winData.resizable, winData.color, winData.loc - winData.entryDir, winData.size * winData.entrySize, winData.entryRedraw, winData.auraIndex));
             }
             else if(ctx == Context.Object)
             {

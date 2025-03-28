@@ -9,16 +9,12 @@ public static partial class Input
     {
     }
 
-    internal static partial void Tick()
+    internal static partial void Tick_Impl()
     {
         KeyState.SwapBuffers(keyState, prevKeyState);
 
         for(i32 i = 0; i < KeyState.KEY_COUNT; i++)
             keyState[i] = (GetAsyncKeyState(KeyToVKey((Key)i)) & 0x8000) != 0;
-
-        foreach((Key key, bool down) in simulatedKeys)
-            keyState[key] = down;
-        simulatedKeys.Clear();
     }
 
 

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using src.Gui;
 
@@ -8,9 +9,11 @@ namespace src.LevelSystem;
 public static class LevelManager
 {
     public const bool LOADING_ANIMATIONS = true;
+    public const i32 LEVEL_COUNT = 3;
+
 
     public static readonly LevelData[] levelList =
-        Enumerable.Range(0, 3)
+        Enumerable.Range(0, LEVEL_COUNT)
         .Select(i => $"res/levels/{i}.lvl")
         .Select(LevelReader.ReadFile)
         .ToArray();
@@ -27,7 +30,7 @@ public static class LevelManager
 
     public static void LoadLevel(LevelData data)
     {
-        if(isBusy || isLevelLoaded)
+        if(isBusy|| isLevelLoaded)
             throw new("Cannot load level while busy or one is already loaded.");
 
         isBusy = true;
@@ -57,13 +60,17 @@ public static class LevelManager
         isBusy = false;
     }
 
-    public static void ReloadLevel()
+    public static void ReloadLevel(bool hardReload = false)
     {
         if(isBusy || !isLevelLoaded)
             throw new($"Cannot reload level while busy or none is loaded");
 
         UnloadLevel();
-        LoadLevel((LevelData)lastLoadedLevel);
+
+        if(hardReload)
+            LoadLevel(Array.Find(levelList, l => Path.GetFullPath(l.filePath) == Path.GetFullPath(((LevelData)lastLoadedLevel).filePath)));
+        else
+            LoadLevel((LevelData)lastLoadedLevel);
     }
 
     public static void AdvanceLevel()
@@ -79,5 +86,24 @@ public static class LevelManager
             MainMenu.Load();
         else
             LoadLevel(levelList[lastIndex+1]);
+    }
+
+    public static void RereadLevelList()
+    {
+#if DEBUG
+        const string RES_PATH = "../../../res";
+
+        if(Directory.Exists(RES_PATH))
+        {
+            foreach(string dir in Directory.GetDirectories(RES_PATH, "*", SearchOption.AllDirectories))
+                Directory.CreateDirectory(Path.GetRelativePath(RES_PATH, dir));
+
+            foreach(string res in Directory.GetFiles(RES_PATH, "*", SearchOption.AllDirectories))
+                File.Copy(res, "res/" + Path.GetRelativePath(RES_PATH, res), true);
+        }
+#endif
+
+        for(i32 i = 0; i < LEVEL_COUNT; i++)
+            levelList[i] = LevelReader.ReadFile($"res/levels/{i}.lvl");
     }
 }

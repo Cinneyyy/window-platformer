@@ -8,7 +8,7 @@ public readonly record struct ColorPalette
             background: baseCol.MultiplyColor(0.255f),
             wall: baseCol.MultiplyColor(0.5f),
             player: baseCol.MixColorLinear(0xffffff),
-            danger: baseCol.InvertColor(),
+            danger: baseCol.InvertColor().MultiplyColor(0.5f).MixColorAdditive(0x800000),
             goal: 0xffb300,
             breakable: baseCol.MixColorLinear(0xaaaaaa).MultiplyColor(0.35f),
             portal: 0x008000,

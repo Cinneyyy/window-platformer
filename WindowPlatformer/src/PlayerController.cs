@@ -14,6 +14,7 @@ public static class PlayerController
         public V2f vel;
         public f32 timeSinceGrounded;
         public f32 timeSinceJumpAttempt;
+        public i32 index;
     }
 
 
@@ -24,32 +25,52 @@ public static class PlayerController
     public const f32 H_ACC = 40f;
     public const f32 H_DAMP = 60f;
     public const f32 MAX_H_SPEED = 2.25f;
+    public const f32 ABS_MAX_H_SPEED = 5f;
+    public const f32 ABS_MAX_V_SPEED = 8f;
     public const f32 JUMP_VALIDATION_WINDOW = 0.225f;
     public const f32 COYOTE_TIME = 0.175f;
 
     private static List<PlayerState> playersAtGoal;
+    private static bool won;
 
 
-    public static PlayerState[] playerObjs { get; set; } = [];
+    public static PlayerState[] playerObjs { get; private set; } = [];
+    public static Window[] auraWins { get; private set; } = [];
+    public static Window[] nonAuraWins { get; private set; } = [];
 
 
     public static void OnLevelLoaded()
     {
+        won = false;
         playersAtGoal = [];
         playerObjs = GameObjectManager.objs
             .FindAll(o => o.type == ObjectType.Player)
             .Select(o => new PlayerState(o))
             .ToArray();
+        Enumerable.Range(0, playerObjs.Length).Do(i => playerObjs[i].index = i);
+        auraWins = [..WindowManager.windows.FindAll(w => w.auraIndex != -1)];
     }
 
     public static void Tick(f32 dt)
     {
+        bool stop = false;
         foreach(PlayerState state in playerObjs)
-            Tick(dt, state);
+        {
+            if(stop)
+                return;
+
+            Tick(dt, state, ref stop);
+        }
+
+        foreach(Window aw in auraWins)
+        {
+            aw.worldLoc = playerObjs[aw.auraIndex].obj.loc;
+            aw.UpdateWindowPos();
+        }
     }
 
 
-    private static void Tick(f32 dt, PlayerState state)
+    private static void Tick(f32 dt, PlayerState state, ref bool stop)
     {
         if(!LevelManager.ready)
             return;
@@ -96,6 +117,9 @@ public static class PlayerController
         if(state.vel.y > 0f && !Input.KeyHeld(Key.W, Key.Up, Key.Space))
             state.vel.y = 0f;
 
+        state.vel.x = f32.Clamp(state.vel.x, -ABS_MAX_H_SPEED, ABS_MAX_H_SPEED);
+        state.vel.y = f32.Clamp(state.vel.y, -ABS_MAX_V_SPEED, ABS_MAX_V_SPEED);
+
         V2f newPos = playerObj.loc + state.vel * dt;
 
         HandleCollision(playerObj, ref newPos, ref state.vel, out bool grounded, out GameObject col);
@@ -117,23 +141,38 @@ public static class PlayerController
                     if(!playersAtGoal.Contains(state))
                         playersAtGoal.Add(state);
 
-                    if(playersAtGoal.Count == playerObjs.Length)
+                    if(playersAtGoal.Count == playerObjs.Length && !won)
+                    {
+                        won = true;
+                        stop = true;
                         WinLevel();
+                        return;
+                    }
 
                     break;
                 }
                 case ObjectType.Breakable:
                 {
                     if(stomping) GameObjectManager.Destroy(col);
-                    else LoseLevel();
+                    else
+                    {
+                        stop = true;
+                        LoseLevel();
+                        return;
+                    }
 
                     break;
                 }
                 default: break;
             }
 
-        if(playerObj is not null && !WindowManager.windows.Any(w => RectsIntersect(playerObj.output.GetLoc(), playerObj.output.GetSize(), w.screenLoc, w.screenSize)))
+        if(playerObj is not null && !WindowManager.windows.Any(w =>
+                w.auraIndex == state.index ||
+                RectsIntersect(playerObj.output.GetLoc(), playerObj.output.GetSize(), w.screenLoc, w.screenSize)))
+        {
+            stop = true;
             LoseLevel();
+        }
     }
 
     private static void LoseLevel()
