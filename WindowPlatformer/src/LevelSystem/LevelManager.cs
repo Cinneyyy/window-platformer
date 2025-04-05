@@ -9,7 +9,7 @@ namespace src.LevelSystem;
 public static class LevelManager
 {
     public const bool LOADING_ANIMATIONS = true;
-    public const i32 LEVEL_COUNT = 3;
+    public const i32 LEVEL_COUNT = 4;
 
 
     public static readonly LevelData[] levelList =
@@ -67,16 +67,30 @@ public static class LevelManager
 
         UnloadLevel();
 
-        if(hardReload)
-            LoadLevel(Array.Find(levelList, l => Path.GetFullPath(l.filePath) == Path.GetFullPath(((LevelData)lastLoadedLevel).filePath)));
-        else
+        if(!hardReload)
             LoadLevel((LevelData)lastLoadedLevel);
+        else
+            try
+            {
+                LoadLevel(Array.Find(levelList, l => Path.GetFullPath(l.filePath) == Path.GetFullPath(((LevelData)lastLoadedLevel).filePath)));
+            }
+            catch(Exception e)
+            {
+                LogError(e, LOG_INFO);
+            }
     }
 
     public static void AdvanceLevel()
     {
         if(isBusy || !isLevelLoaded)
             throw new($"Cannot advance level while busy or none is loaded");
+
+        if(MainMenu.isActive)
+        {
+            MainMenu.Unload();
+            LoadLevel(levelList[0]);
+            return;
+        }
 
         UnloadLevel();
 
@@ -88,22 +102,51 @@ public static class LevelManager
             LoadLevel(levelList[lastIndex+1]);
     }
 
+    public static void BackstepLevel()
+    {
+        if(isBusy || !isLevelLoaded)
+            throw new($"Cannot backstep level while busy or none is loaded");
+
+        if(MainMenu.isActive)
+        {
+            MainMenu.Unload();
+            LoadLevel(levelList[^1]);
+            return;
+        }
+
+        UnloadLevel();
+
+        i32 lastIndex = Array.IndexOf(levelList, (LevelData)lastLoadedLevel);
+
+        if(lastIndex == 0)
+            MainMenu.Load();
+        else
+            LoadLevel(levelList[lastIndex-1]);
+    }
+
     public static void RereadLevelList()
     {
-#if DEBUG
-        const string RES_PATH = "../../../res";
-
-        if(Directory.Exists(RES_PATH))
+        try
         {
-            foreach(string dir in Directory.GetDirectories(RES_PATH, "*", SearchOption.AllDirectories))
-                Directory.CreateDirectory(Path.GetRelativePath(RES_PATH, dir));
+    #if DEBUG
+            const string RES_PATH = "../../../res";
 
-            foreach(string res in Directory.GetFiles(RES_PATH, "*", SearchOption.AllDirectories))
-                File.Copy(res, "res/" + Path.GetRelativePath(RES_PATH, res), true);
+            if(Directory.Exists(RES_PATH))
+            {
+                foreach(string dir in Directory.GetDirectories(RES_PATH, "*", SearchOption.AllDirectories))
+                    Directory.CreateDirectory(Path.GetRelativePath(RES_PATH, dir));
+
+                foreach(string res in Directory.GetFiles(RES_PATH, "*", SearchOption.AllDirectories))
+                    File.Copy(res, "res/" + Path.GetRelativePath(RES_PATH, res), true);
+            }
+    #endif
+
+            for(i32 i = 0; i < LEVEL_COUNT; i++)
+                levelList[i] = LevelReader.ReadFile($"res/levels/{i}.lvl");
         }
-#endif
-
-        for(i32 i = 0; i < LEVEL_COUNT; i++)
-            levelList[i] = LevelReader.ReadFile($"res/levels/{i}.lvl");
+        catch(Exception e)
+        {
+            LogError(e, LOG_INFO);
+        }
     }
 }

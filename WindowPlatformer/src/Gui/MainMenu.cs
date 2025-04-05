@@ -22,23 +22,23 @@ public static class MainMenu
         isActive = true;
     }
 
-    public static void Quit()
+    public static void Unload()
     {
         ThreadManager.dynamicTick -= Tick;
         isActive = false;
-
-        WindowManager.exitAnimTime = 1000;
-
         LevelManager.UnloadLevel();
+    }
+
+    public static void OnQuit()
+    {
+        WindowManager.exitAnimTime = 1000;
+        Unload();
         ThreadManager.Quit();
     }
 
-    public static void Begin()
+    public static void OnBegin()
     {
-        ThreadManager.dynamicTick -= Tick;
-        isActive = false;
-
-        LevelManager.UnloadLevel();
+        Unload();
         LevelManager.LoadLevel(LevelManager.levelList[0]);
     }
 
@@ -55,8 +55,8 @@ public static class MainMenu
                 {
                     switch(SDL_GetWindowTitle(win.sdlWin))
                     {
-                        case "Begin": Begin(); break;
-                        case "Quit": Quit(); break;
+                        case "Begin": OnBegin(); break;
+                        case "Quit": OnQuit(); break;
                         default: break;
                     }
 

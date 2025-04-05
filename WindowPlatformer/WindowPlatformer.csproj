@@ -32,6 +32,9 @@
       <None Update="res\levels\2.lvl">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
+      <None Update="res\levels\3.lvl">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
       <None Update="res\levels\main_menu.lvl">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>

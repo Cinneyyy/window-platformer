@@ -1,7 +1,6 @@
 using System.Linq;
 using src.Utility;
 using src.LevelSystem;
-using src.Gui;
 using System.Collections.Generic;
 
 namespace src;
@@ -15,10 +14,11 @@ public static class PlayerController
         public f32 timeSinceGrounded;
         public f32 timeSinceJumpAttempt;
         public i32 index;
+        public List<GameObject> collisions = [];
     }
 
 
-    public const f32 TIME_SCALE = 0.85f;
+    public const f32 TIME_SCALE = 0.8f;
     public const f32 GRAVITY = -10f;
     public const f32 STOMP_SPEED = -40f;
     public const f32 JUMP_STRENGTH = 3.25f;
@@ -123,7 +123,7 @@ public static class PlayerController
 
         V2f newPos = playerObj.loc + state.vel * dt;
 
-        HandleCollision(playerObj, ref newPos, ref state.vel, out bool grounded, out GameObject col);
+        HandleCollision(playerObj, ref newPos, ref state.vel, out bool grounded, state.collisions);
 
         if(grounded)
             state.timeSinceGrounded = COYOTE_TIME;
@@ -133,10 +133,9 @@ public static class PlayerController
 
         playerObj.loc = newPos;
 
-        if(col is not null)
+        foreach(GameObject col in state.collisions)
             switch(col.type)
             {
-                case ObjectType.Danger: LoseLevel(); break;
                 case ObjectType.Goal:
                 {
                     if(!playersAtGoal.Contains(state))
@@ -152,6 +151,7 @@ public static class PlayerController
 
                     break;
                 }
+                case ObjectType.Danger: LoseLevel(); break;
                 case ObjectType.Breakable:
                 {
                     if(stomping) GameObjectManager.Destroy(col);
@@ -184,10 +184,10 @@ public static class PlayerController
     private static void WinLevel()
         => LevelManager.AdvanceLevel();
 
-    private static void HandleCollision(GameObject playerObj, ref V2f newPos, ref V2f vel, out bool grounded, out GameObject col)
+    private static void HandleCollision(GameObject playerObj, ref V2f newPos, ref V2f vel, out bool grounded, List<GameObject> collisions)
     {
         grounded = false;
-        col = null;
+        collisions.Clear();
 
         if(!LevelManager.ready || playerObj is null)
             return;
@@ -221,7 +221,7 @@ public static class PlayerController
                         newPos.x = wr + pl.size.x / 2f;
 
                     vel.x = 0f;
-                    col = obj;
+                    collisions.Add(obj);
                 }
             }
 
@@ -238,7 +238,7 @@ public static class PlayerController
                     }
 
                     vel.y = 0f;
-                    col = obj;
+                    collisions.Add(obj);
                 }
             }
         }

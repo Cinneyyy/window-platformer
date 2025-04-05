@@ -100,20 +100,16 @@ public static class ThreadManager
                     LevelManager.ReloadLevel();
             }
 
-            if(!MainMenu.isActive)
-            {
-                if(Input.KeyDown(Key.N))
-                    LevelManager.AdvanceLevel();
-                if(Input.KeyDown(Key.Esc))
+            if(Input.KeyDown(Key.N))
+                LevelManager.AdvanceLevel();
+            if(Input.KeyDown(Key.P))
+                LevelManager.BackstepLevel();
+
+            if(Input.KeyDown(Key.Esc))
+                if(MainMenu.isActive)
+                    MainMenu.OnQuit();
+                else
                     MainMenu.Load();
-            }
-            else
-            {
-                if(Input.KeyDown(Key.N))
-                    MainMenu.Begin();
-                if(Input.KeyDown(Key.Esc))
-                    MainMenu.Quit();
-            }
 
             SDL_Delay(1);
         }

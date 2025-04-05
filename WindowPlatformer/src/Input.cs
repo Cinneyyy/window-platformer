@@ -41,7 +41,7 @@ public static partial class Input
             keyState[key] = down;
         simulatedKeys.Clear();
 
-        takeInput = !ConsoleWindow.hasFocus;
+        takeInput = SDL_GetKeyboardFocus() != nint.Zero && !ConsoleWindow.hasFocus;
     }
 
 
