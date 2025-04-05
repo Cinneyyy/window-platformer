@@ -9,12 +9,10 @@ namespace src.LevelSystem;
 public static class LevelManager
 {
     public const bool LOADING_ANIMATIONS = true;
-    public const i32 LEVEL_COUNT = 4;
 
 
     public static readonly LevelData[] levelList =
-        Enumerable.Range(0, LEVEL_COUNT)
-        .Select(i => $"res/levels/{i}.lvl")
+        Directory.GetFiles("res/levels/game")
         .Select(LevelReader.ReadFile)
         .ToArray();
 
@@ -141,8 +139,8 @@ public static class LevelManager
             }
     #endif
 
-            for(i32 i = 0; i < LEVEL_COUNT; i++)
-                levelList[i] = LevelReader.ReadFile($"res/levels/{i}.lvl");
+            for(i32 i = 0; i < levelList.Length; i++)
+                levelList[i] = LevelReader.ReadFile($"res/levels/game/{i}.lvl");
         }
         catch(Exception e)
         {

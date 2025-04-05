@@ -23,16 +23,16 @@
     </ItemGroup>
 
     <ItemGroup>
-      <None Update="res\levels\0.lvl">
+      <None Update="res\levels\game\0.lvl">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
-      <None Update="res\levels\1.lvl">
+      <None Update="res\levels\game\1.lvl">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
-      <None Update="res\levels\2.lvl">
+      <None Update="res\levels\game\2.lvl">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
-      <None Update="res\levels\3.lvl">
+      <None Update="res\levels\game\3.lvl">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
       <None Update="res\levels\main_menu.lvl">
